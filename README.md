@@ -1,0 +1,3 @@
+Hi and welcome to my readme! THis is the original website for the Itasca Community Website. 
+
+More added later...... 
