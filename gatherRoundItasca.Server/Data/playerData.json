@@ -1,0 +1,66 @@
+[
+  {
+    "Email": "player1@example.com",
+    "FavoriteColor": null,
+    "FavoriteFood": null,
+    "FavoriteAnimal": null,
+    "PlayerId": "R1P2B3456",
+    "Points": 0
+  },
+  {
+    "Email": "player2@example.com",
+    "FavoriteColor": null,
+    "FavoriteFood": null,
+    "FavoriteAnimal": null,
+    "PlayerId": "B2G3Y7890",
+    "Points": 0
+  },
+  {
+    "Email": "astratt89@gmail.com",
+    "FavoriteColor": "",
+    "FavoriteFood": "",
+    "FavoriteAnimal": "",
+    "PlayerId": "UNDEFINEDUNDEFINEDUNDEFINED7670",
+    "Points": 0
+  },
+  {
+    "Email": "astratt89@gmail.com",
+    "FavoriteColor": "Green",
+    "FavoriteFood": "Pasta",
+    "FavoriteAnimal": "Bird",
+    "PlayerId": "GPB1342",
+    "Points": 89
+  },
+  {
+    "Email": "astratt89@gmail.com",
+    "FavoriteColor": "",
+    "FavoriteFood": "",
+    "FavoriteAnimal": "",
+    "PlayerId": "UNDEFINEDUNDEFINEDUNDEFINED8841",
+    "Points": 0
+  },
+  {
+    "Email": "astratt89@gmail.com",
+    "FavoriteColor": "Green",
+    "FavoriteFood": "Pasta",
+    "FavoriteAnimal": "Bird",
+    "PlayerId": "GPB4101",
+    "Points": 0
+  },
+  {
+    "Email": "astratt89@gmail.com",
+    "FavoriteColor": "Yellow",
+    "FavoriteFood": "Sushi",
+    "FavoriteAnimal": "Bird",
+    "PlayerId": "YSB5817",
+    "Points": 0
+  },
+  {
+    "Email": "astratt89@gmail.com",
+    "FavoriteColor": "",
+    "FavoriteFood": "",
+    "FavoriteAnimal": "",
+    "PlayerId": "UNDEFINEDUNDEFINEDUNDEFINED2005",
+    "Points": 0
+  }
+]

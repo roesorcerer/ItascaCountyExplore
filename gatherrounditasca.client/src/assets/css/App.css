@@ -1,0 +1,28 @@
+﻿#root {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 2rem;
+    text-align: center;
+}
+
+/* Add styles for the header to override #root constraints */
+.header { /* Replace with actual header class or id */
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    width: 100vw; /* This ensures the header is full width */
+    box-sizing: border-box; /* Ensures padding & border are included in width */
+}
+
+tr:nth-child(even) {
+    background: #F2F2F2;
+}
+
+tr:nth-child(odd) {
+    background: #FFF;
+}
+
+th, td {
+    padding-left: 1rem;
+    padding-right: 1rem;
+}

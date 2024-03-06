@@ -1,0 +1,443 @@
+@import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+
+
+/* General Resets */
+html, body {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    min-width: 320px;
+    min-height: 100vh;
+    background-color: white;
+    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Typography */
+h1 {
+    font-size: 3.2em;
+    line-height: 1.1;
+}
+
+/* Links */
+a {
+    font-weight: 500;
+    color: #646cff;
+    text-decoration: inherit;
+}
+
+    a:hover {
+        color: #535bf2;
+    }
+
+/* Buttons */
+button {
+    border-radius: 8px;
+    border: 1px solid transparent;
+    padding: 0.6em 1.2em;
+    font-size: 1em;
+    font-weight: 500;
+    background-color: #1a1a1a;
+    color: white;
+    cursor: pointer;
+    transition: border-color 0.25s;
+}
+
+    button:hover {
+        border-color: #646cff;
+    }
+
+    button:focus,
+    button:focus-visible {
+        outline: 4px auto -webkit-focus-ring-color;
+    }
+
+/* Header Styles */
+.header-custom {
+    background-color: rgb(125, 175, 175); /* Soft blue-green */
+    color: #ffffff; /* White for text to ensure good contrast */
+    padding: inherit;
+    text-align: center;
+    position: relative;
+    z-index: 1000;
+}
+
+.container-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 1200px;
+    margin: auto;
+}
+
+.navbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo {
+    height: 50px;
+    margin-right: 10px;
+}
+
+.header-title {
+    font-family: 'Pacifico', cursive;
+    color: white;
+    font-size: 1.5rem;
+}
+
+/* Navigation Styles */
+.navbar-custom {
+    background-color: transparent !important;
+    /*border-bottom: 1px solid #fff;  Optional: adds a subtle divider */
+}
+
+.nav-buttons {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+}
+
+.nav-button {
+    padding: 8px 12px;
+    margin-left: 10px;
+    color: white;
+    background-color: transparent;
+    border: none;
+}
+
+    .nav-button:hover, .nav-button:focus {
+        color: #E0E0E0;
+        text-decoration: none;
+    }
+
+.navbar-toggler {
+    border: none;
+    background-color: transparent !important; /* Makes the button's background transparent */
+    padding: 0.5rem; /* Add padding to make the hit area larger */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.navbar-toggler-icon {
+    background-image: url('../assets/imgs/icons8-menu-100.png');
+    display: inline-block;
+    width: 30px; /* Adjust as needed */
+    height: 30px; /* Adjust as needed */
+    background-size: cover;
+    background-position: center;
+}
+
+.nav-link {
+    color: white;
+    transition: color 0.3s ease-in-out;
+    display: block; /* Make the links fill their container */
+    padding: 0.5rem 1rem; /* Give some spacing around the links */
+}
+
+    .nav-link:hover {
+        color: #E0E0E0;
+    }
+/* Ensure the navigation menu appears when the navbar toggler is clicked */
+/* This is controlled by Bootstrap's JavaScript, so make sure you've included Bootstrap JS */
+.collapse {
+    display: none; /* Hide by default */
+}
+
+    .collapse.show {
+        display: block; /* Show when toggled */
+    }
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .navbar-custom {
+        flex-direction: column;
+        align-items: flex-start; /* Align items to the start on smaller */
+    }
+
+    .nav-buttons {
+        width: 100%; /* Full width */
+        justify-content: flex-end; /* Align the button to the right */
+        padding-top: 0.5rem; /* Add some space above the button */
+    }
+
+    .collapse {
+        width: 100%; /* Full width */
+    }
+}
+
+/*Cutom Styles for Home Page*/
+/*Customer Styles for banner-img*/
+.banner-img {
+    margin-top: 20px;
+    background-image: url('/assets/imgs/fashion/bannertampschoolhouse.jpg');
+    background-size: auto;
+    background-position: center;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 25px;
+    overflow: hidden;
+}
+
+/*Box on top of the image style*/
+.banner-box {
+    position: absolute;
+    content: "";
+    left: 0px;
+    right: 0px;
+    border-radius: 20px;
+    margin: 0 auto;
+    width: 70%;
+    bottom: -120px;
+    background: #fff;
+    padding: 50px 80px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+@media (max-width: 400px) {
+    .banner-box {
+        position: relative;
+        width: 100%;
+        padding: 50px 15px;
+        bottom: 0px;
+    }
+}
+
+@media (max-width: 575px) {
+    .banner-box {
+        position: relative;
+        width: 100%;
+        padding: 50px 15px;
+        bottom: 0px;
+    }
+}
+
+@media (max-width: 768px) {
+    .banner-box {
+        position: relative;
+        width: 100%;
+        padding: 50px 15px;
+        bottom: 0px;
+    }
+}
+
+/* Start of HomePage Centerpage Styles*/
+.image-container {
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    height: 300px; /* Fixed height for consistency */
+    width: 100%;
+    display: block;
+    border-radius: 25px;
+    overflow: hidden;
+    transition: transform 0.3s ease-in-out; /* Smooth transition for hover effect */
+}
+
+/* Specific styles for each image to create offset */
+.center-img {
+    margin-top: 20px;
+    transform: translateX(0%); /* Center image remains in place */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.left-img {
+    margin-top: 30px; /* Slightly lower than the center image */
+    transform: translateX(50%); /* Shift to the left */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.right-img {
+    margin-top: 40px; /* Lower than both center and left images */
+    transform: translateX(90%); /* Shift to the right */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Accordion Styles */
+.accordion-button {
+    width: 90%;
+    padding: 30px 50px;
+    text-align: center;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    outline: none;
+    transition: background-color 0.3s;
+    transform: skew(-20deg);
+    margin-left: 20px;
+    margin-right: 20px;
+    background-image: url('./assets/images/button-intro.jpg');
+    background-size: cover;
+    background-position: center;
+}
+
+    .accordion-button:hover, .accordion-button:focus {
+        background-color: #45a049;
+    }
+
+    .accordion-button > * {
+        transform: skew(20deg);
+    }
+
+.accordion-content {
+    padding: 0 15px;
+    background: white;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.6s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+
+/*Footer Styling*/
+.footer {
+    background-color: #333;
+    color: white;
+    padding: 1rem 0;
+    position: relative;
+}
+
+    .footer .container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 2rem;
+    }
+
+.social-media span {
+    margin-right: 1rem;
+}
+
+.social-media a {
+    color: white;
+    margin: 0 0.5rem;
+    font-size: 1.5rem;
+}
+
+.admin-login {
+    position: absolute;
+    bottom: 0.5rem;
+    right: 0.5rem;
+    font-size: 0.8rem;
+}
+
+    .admin-login .login-link {
+        color: white;
+        opacity: 0.5;
+    }
+
+        .admin-login .login-link:hover,
+        .admin-login .login-link:focus {
+            opacity: 1;
+            text-decoration: none;
+        }
+
+/* Play.css container */
+.container-margin-top {
+    margin-top: 10px;
+    padding: 0 15px;
+    margin-block-end: 40px;
+}
+
+.row, .card-columns {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between; /* Ensures even spacing between elements */
+}
+
+/* Card Component Styles */
+.card {
+    flex: 0 0 32%; /* Allows three cards per row with some margin */
+    margin-bottom: 20px; /* Space between card rows */
+}
+
+.card-img-top {
+    width: 100%; /* Full width of card */
+    height: auto; /* Maintain aspect ratio */
+    background-size: cover;
+    background-position: center;
+    padding: 10px;
+}
+
+.card-columns .card-img {
+    height: 330px;
+    background-position: center; /* Center the image */
+    background-repeat: no-repeat; /* Prevent image repetition */
+    background-size: cover; /* Cover the container with the image */
+    opacity: .8;
+}
+
+.card:hover {
+    transform: scale(1.05); /* Slightly enlarge cards on hover */
+    box-shadow: 0 10px 20px rgba(37,33,82,.12), 0 4px 8px rgba(37,33,82,.06);
+}
+
+.card .card-header, .card-footer {
+    text-align: center;
+    font-family: 'Sansita Swashed', sans-serif; /* Stylish font for headers and footers */
+    background: #fbfafd; /* Light background for footer */
+}
+
+/* Navigation Styles */
+a.navbar-brand {
+    font-family: 'Yellowtail', cursive;
+    font-size: xx-large;
+    text-align: center;
+}
+
+.nav-pills .nav-link.active, .nav-pills .show > .nav-link {
+    background-color: #1b6ec2; /* Active link background */
+}
+
+/* Button Styles */
+.btn-primary {
+    background-color: #252152; /* Primary button background */
+    border-color: #252152;
+}
+
+    .btn-primary:hover {
+        background-color: #e9a8a6; /* Hover state for primary buttons */
+        border-color: #e9a8a6;
+    }
+
+/* Modal Component Styles */
+.modal {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    z-index: 1000;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5); /* Semi-transparent background */
+}
+
+.modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 5px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto; /* Scrollable content */
+}
+
+.close {
+    position: absolute;
+    top: 10px; /* Distance from the top of .modal-content */
+    right: 10px; /* Distance from the right of .modal-content */
+    font-size: 1.5em;
+    cursor: pointer;
+}

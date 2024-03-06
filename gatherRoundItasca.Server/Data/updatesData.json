@@ -1,0 +1,23 @@
+[
+  {
+    "UpdateNumber": 1,
+    "Date": "01/25/24",
+    "LocationUpdate": "New locations added in the downtown area!",
+    "LeaderboardUpdate": "Leaderboard prizes have been updated.",
+    "Image": "public/assets/imgs/slider/slider1.jpg"
+  },
+  {
+    "UpdateNumber": 2,
+    "Date": "03/25/24",
+    "LocationUpdate": "New Players Signed up, compete to see how you do!",
+    "LeaderboardUpdate": "Leaderboard prizes have been updated.",
+    "Image": "public/assets/imgs/slider/slider2.jpg"
+  },
+  {
+    "UpdateNumber": 3,
+    "Date": "04/25/24",
+    "LocationUpdate": "See what the area has to offer",
+    "LeaderboardUpdate": "Leaderboard prizes have been updated.",
+    "Image": "public/assets/imgs/slider/slider3.jpg"
+  }
+]
