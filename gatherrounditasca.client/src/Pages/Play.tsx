@@ -22,6 +22,16 @@ const Play: React.FC = () => {
     const [playerId, setPlayerId] = useState('');
     const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
 
+    // New function to print current location to the console for testing purposes remove later
+    const printCurrentLocation = () => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition((position) => {
+                console.log(`Current Position: Latitude: ${position.coords.latitude}, Longitude: ${position.coords.longitude}`);
+            });
+        } else {
+            console.error("Geolocation is not supported by this browser.");
+        }
+    };
     useEffect(() => {
         const fetchLocations = async () => {
             try {
@@ -31,6 +41,7 @@ const Play: React.FC = () => {
                 }
                 const data = await response.json();
                 setLocations(data);
+                printCurrentLocation();
             } catch (error) {
                 console.error('Failed to fetch location:', error);
                 toast.error('Failed to fetch locations');
@@ -41,9 +52,9 @@ const Play: React.FC = () => {
     }, []);
 
     const handleSolveRiddle = async () => {
-        console.log("Submit Answer Clicked")
+        console.log("Submit Answer Clicked");
         if (!playerId) {
-            console.log("No player ID entered")
+            console.log("No player ID entered");
             toast.error('Please enter your playerID');
             return;
         }
@@ -55,24 +66,27 @@ const Play: React.FC = () => {
 
         navigator.geolocation.getCurrentPosition(async (position) => {
             const { latitude, longitude } = position.coords;
-            // Format user coordinates as string to match your JSON structure
-            const userCoordinates = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
 
             try {
                 const playerDataResponse = await fetch(`http://localhost:5164/api/Player/retrieveID?playerID=${playerId}`);
                 if (!playerDataResponse.ok) throw new Error('Failed to fetch player data');
                 const playerData = await playerDataResponse.json();
 
-                if (playerData.playerId === playerId) {
-                    // Check if the selected location is loaded and matches the user's coordinates
-                    if (selectedLocation && selectedLocation.coordinates === userCoordinates) {
+                if (playerData.playerId === playerId && selectedLocation) {
+                    // No longer need to check if selectedLocation is not null here
+                    const proximityThreshold = 0.01; // Example threshold for "closeness", adjust as needed
+                    const targetCoordinates = selectedLocation.coordinates.split(', ').map(Number);
+                    const distanceLat = Math.abs(latitude - targetCoordinates[0]);
+                    const distanceLon = Math.abs(longitude - targetCoordinates[1]);
+
+                    if (distanceLat <= proximityThreshold && distanceLon <= proximityThreshold) {
                         toast.success('Correct Location! Points added.');
                         // Logic to add a point to the player's data here
                     } else {
                         toast.error('Incorrect Location! Try again.');
                     }
                 } else {
-                    toast.error('Player does not exist');
+                    toast.error('Player does not exist or no location selected');
                 }
             } catch (error) {
                 console.error('Failed to solve riddle:', error);

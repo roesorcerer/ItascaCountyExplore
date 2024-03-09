@@ -11,6 +11,5 @@
   <ItemGroup>
     <Folder Include="src\assets\js\" />
     <Folder Include="src\HomePageAssests\" />
-    <Folder Include="src\Pages\" />
   </ItemGroup>
 </Project>

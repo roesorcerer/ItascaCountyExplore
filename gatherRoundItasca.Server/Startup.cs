@@ -1,6 +1,10 @@
-﻿using gatherRoundItasca.Server.Services;
+﻿using Azure.Identity;
+using Azure.Security.KeyVault.Secrets;
+using gatherRoundItasca.Server.Data;
+using gatherRoundItasca.Server.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -19,6 +23,29 @@ namespace gatherRoundItasca.Server
 
         public void ConfigureServices(IServiceCollection services)
         {
+            //Azure Key Vault configuration
+            var keyVaultUri = Configuration["AzureKeyVault:Uri"];
+            if (!string.IsNullOrEmpty(keyVaultUri))
+            {
+                var secretClient = new SecretClient(new Uri(keyVaultUri), new DefaultAzureCredential());
+
+                //Retrive the database connection string from the key vault
+                var connectionStringSecret = secretClient.GetSecret("ExploreDatabaseConnectionString");
+                var connectionString = connectionStringSecret.Value.Value;
+
+                //configure DB file with SQL Server using the connection string
+                services.AddDbContext<ExploreItascaContext> (options =>              
+                    options.UseSqlServer(connectionString), ServiceLifetime.Scoped);
+            }
+            else
+            {
+                //Fallback to local configuration if the key vault is not configured
+                services.AddDbContext<ExploreItascaContext>(options =>
+                    options.UseSqlServer(Configuration.GetConnectionString("ExploreItascaContext")), ServiceLifetime.Scoped);
+             }
+            
+            
+              
             // Add MVC controllers to the service collection
             services.AddControllers();
             // Add other necessary services here...

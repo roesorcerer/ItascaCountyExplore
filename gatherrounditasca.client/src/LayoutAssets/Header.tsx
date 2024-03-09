@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navbar, Nav } from 'react-bootstrap';
 import { NavLink } from 'react-router-dom';
-import logo from '../assets/imgs/logo.png';
+import logo from '../assets/imgs/header/logo-exploreitasca.png';
 
 
 const Header: React.FC = () => {
@@ -12,23 +12,29 @@ const Header: React.FC = () => {
             <div className="container">
                 <div className="columns is-gapless">
                     <div className="column is-12">
-                        <nav className="navbar navigation">
-                            <div className="navbar-brand">
+                        <nav className="navbar navigation">                            
                                 {/* Logo and title */} 
                                 <Navbar.Brand  href="/">
-                                        {/*Banner image style is in the css file*/ }
-                                    <span className="header-title">Itasca Explorers</span>
-                                    </Navbar.Brand>
+                                        {/*Banner image style is in the css file*/}
+                                    {/* Logo Container */}
+                                    <div className="navbar-brand">
+                                        <div className="logo-container">
+                                            <img src={logo} alt="Logo" className="logo-img" />
+                                        </div>
+                                
+                                        <span className="header-title">Itasca Explorers</span>
+                                    </div>
+                                </Navbar.Brand>
                                     {/* Burger menu */ }
                                     <span role="button" className="navbar-burger" aria-label="menu" aria-expanded="false" data-target="menu1">
                                         <span aria-hidden="true"></span>
                                         <span aria-hidden="true"></span>
                                         <span aria-hidden="true"></span>
                                     </span>
-                                </div>
+                               
                                 {/* Menu and navigation */}
                                 {/* Menu starts here */} 
-                                <div id="menu1" className="navbar-menu">
+                                <nav id="menu1" className="navbar-menu">
                                     <div className="navbar-start">
                                         {/*Home Nav Menu Item */}
                                         <div className="navbar-item has-dropdown is-hoverable">                                            
@@ -61,11 +67,12 @@ const Header: React.FC = () => {
                                             </Nav.Item>
                                         </div>
 
+
                                         {/* Add more Nav.Links or LinkContainer as needed */}
 
-                                          </div>
-                                    </div>
-
+                                          
+                                    
+                                 
                                         {/* Add more Nav.Links or LinkContainer as needed */}
                                         <div className="navbar-end">
                                             <div className="navbar-item">
@@ -75,18 +82,23 @@ const Header: React.FC = () => {
                                                     <li className="list-inline-item"><a href="#"><i className="ti-linkedin"></i></a></li>
                                                     <li className="list-inline-item"><a href="#"><i className="ti-pinterest"></i></a></li>
                                                 </ul>
-                                        </div>
+                                            </div>
                                     
                                 </div>
-                            </nav>
-                        </div>
+                            </div>
+                                </nav>
+                        </nav>
                     </div>
                 </div>
-            </header>
-        </>
+            </div>
+            </header >
+
+</>
     );
 };
 
+              
+                   
 export default Header;
 
   

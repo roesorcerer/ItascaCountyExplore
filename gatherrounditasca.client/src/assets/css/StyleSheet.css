@@ -1102,29 +1102,51 @@ overlay search
     background: #fff;
     padding: 50px 80px;
 }
-
-.slider-item {
-    margin: 0px 10px;
+/* Accordion Content Styles */
+.accordion-content {
+    padding: 30px; /* Increase padding as needed */
+    background: white;
+    max-height: 100%;
+    transition: max-height 0.6s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-    .slider-item img {
-        width: 100%;
-    }
-
-.slider-item-content {
+/*Making adjustments here*/
+.slider-item {
+    margin: 10px;
     position: relative;
 }
 
+    .slider-item img {
+        max-height: 600px; /* Ensure the image is no taller than the container */
+        max-width: 400px; /* Ensure the image is no wider than the container */
+        background-position: center;
+        display: flex;
+        justify-content: center; /* Center horizontally */
+        align-items: center; /* Center vertically */
+        border-radius: 15px;
+        overflow: hidden;
+        /* Remove the fixed width and height if you want the image to maintain its aspect ratio */
+    }
+
+.slider-item-content {
+    display: inline-flex;
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+}
+
 .slider-post-content {
-    position: absolute;
-    bottom: 38px;
-    padding: 20px;
-    background: #fff;
-    width: 90%;
+    position: sticky;
+    background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent white background */
+    padding: 10px;
+    width: 300px; /*slider box width to ensure fixed size*/
+    height: 300px; /*slider box height to ensure fixed size*/
     text-align: center;
-    margin: 0 auto;
-    left: 0px;
-    right: 0px;
+    top: 25%; /* Position halfway down the container */
+    right: 0; /* Align to the right edge of the container */
+    transform: translate(15%, -15%); /* Adjust position to center the content box */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Optional: adds a subtle shadow */
+    border-radius: 8px; /* Rounded corners */
 }
 
 @media (max-width: 400px) {
@@ -1622,7 +1644,6 @@ footer
 -------------------------------*/
 .footer-section {
     background: #f8f8f8;
-    background: #000;
     padding: 60px 0px 0px;
     margin-top: 150px;
     position: relative;

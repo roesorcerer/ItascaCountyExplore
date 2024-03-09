@@ -80,16 +80,34 @@ button {
     align-items: center;
     gap: 10px;
 }
-
-.logo {
-    height: 50px;
-    margin-right: 10px;
+/*Targetting the logo only*/
+.logo-container {
+    float: left; /* Position logo to the left */
+    margin-right: 20px; /* Add some space between logo and text */
+}
+/*Logo style*/
+.logo-img {
+    background-image: url('/assets/imgs/header/logo-exploreitasca.png');
+    max-width: 100px; /* Adjust based on your logo's size */
+    max-height: 100px; /* Adjust based on your logo's size */
+    position: absolute;
+    top: -5px; /* Adjust based on desired spacing from top */
+    left: -80px; /* Adjust based on desired spacing from the left */
+    border-radius: 12px; /* Optional: if you want rounded corners */
+    opacity: 0.75; /*Opacity for the logo*/
+}
+/* Clearfix for floated logo */
+.navbar-brand::after {
+    content: "";
+    display: table;
+    clear: both;
 }
 
 .header-title {
     font-family: 'Pacifico', cursive;
-    color: white;
+    color: #333333;
     font-size: 1.5rem;
+    opacity: 0.75;
 }
 
 /* Navigation Styles */
@@ -180,12 +198,30 @@ button {
     background-image: url('/assets/imgs/fashion/bannertampschoolhouse.jpg');
     background-size: auto;
     background-position: center;
-    height: 100vh;
+    height: 40vh;
     display: flex;
     justify-content: center;
     align-items: center;
     border-radius: 25px;
     overflow: hidden;
+}
+
+/*Image Credit Box Floating Box to credit the artist*/
+.image-credit {
+    position: absolute; /* Position relative to the nearest positioned ancestor */
+    bottom: 10px; /* Distance from the bottom of the banner */
+    right: 10px; /* Distance from the right side of the banner */
+    background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent white background */
+    color: #333; /* Text color */
+    padding: 8px 12px; /* Padding inside the box */
+    border-radius: 8px; /* Rounded corners */
+    font-size: 0.8em; /* Font size */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Optional: adds a subtle shadow */
+    z-index: 10; /* Ensures the credit appears above other content */
+}
+
+.banner {
+    position: relative; /* Makes the .banner a positioned ancestor for .image-credit */
 }
 
 /*Box on top of the image style*/
@@ -202,6 +238,7 @@ button {
     padding: 50px 80px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
+
 @media (max-width: 400px) {
     .banner-box {
         position: relative;
@@ -231,75 +268,150 @@ button {
 
 /* Start of HomePage Centerpage Styles*/
 .image-container {
-    background-size: cover;
+    background-size: auto;
     background-repeat: no-repeat;
     background-position: center;
-    height: 300px; /* Fixed height for consistency */
+    height: 200px; /* Fixed height for consistency */
     width: 100%;
     display: block;
     border-radius: 25px;
     overflow: hidden;
     transition: transform 0.3s ease-in-out; /* Smooth transition for hover effect */
+    position: relative; /* Needed for z-index to take effect */
+    z-index: 1; /* Ensure images are below the text */
+    margin: 0 auto 30px;
+    margin-bottom: 30px; /* Space between each image-text pair */
 }
-
-/* Specific styles for each image to create offset */
-.center-img {
-    margin-top: 20px;
-    transform: translateX(0%); /* Center image remains in place */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.left-img {
-    margin-top: 30px; /* Slightly lower than the center image */
-    transform: translateX(50%); /* Shift to the left */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.right-img {
-    margin-top: 40px; /* Lower than both center and left images */
-    transform: translateX(90%); /* Shift to the right */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* Accordion Styles */
-.accordion-button {
-    width: 90%;
-    padding: 30px 50px;
-    text-align: center;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    font-size: 18px;
-    cursor: pointer;
-    outline: none;
-    transition: background-color 0.3s;
-    transform: skew(-20deg);
-    margin-left: 20px;
-    margin-right: 20px;
-    background-image: url('./assets/images/button-intro.jpg');
-    background-size: cover;
-    background-position: center;
-}
-
-    .accordion-button:hover, .accordion-button:focus {
-        background-color: #45a049;
+/* Adjust the spacing and layout for mobile screens */
+@media (max-width: 576px) {
+    .image-container {
+        margin-bottom: 20px; /* Less space between image and text on small screens */
+    }
+    /*Styling for the text AROUND the image to ensure it is ABOVE image, not below*/
+    .post-article {
+        position: absolute; /* Needed for z-index to take effect */
+        z-index: 2; /* Higher than the image's z-index */
+        /* Ensure the text container has a background if it overlaps directly with images for readability */
+        background-color: rgba(255, 255, 255, 0.9); /* Semi-transparent background */
+        padding: 30px; /* Optional: Adds some spacing inside the text container */
+        border-radius: 20px; /* Optional: Rounds the corners */
+        top: 20px; /* Distance from the top of the container */
+        right: 20px; /* Distance from the right of the container */
     }
 
-    .accordion-button > * {
-        transform: skew(20deg);
+    .image-text-container {
+        position: relative; /* This makes child absolute positioning relative to this container */
+        display: flex;
+        align-items: center; /* This aligns items vertically in the center */
+        justify-content: center; /* This centers items horizontally */
+        margin-bottom: 20px; /* Spacing between each image-text pair */
     }
 
-.accordion-content {
-    padding: 0 15px;
-    background: white;
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.6s ease;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    .text-over-image {
+        position: absolute;
+        width: 100%; /* Make text box the same width as the image for responsiveness */
+        top: 50%; /* Center vertically */
+        left: 50%; /* Center horizontally */
+        transform: translate(-50%, -50%); /* Adjust position to be centered on top of the image */
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.9); /* Semi-transparent background */
+        border-radius: 15px; /* Rounded corners to match the image */
+        text-align: center; /* Center the text within the box */
+        z-index: 2; /* Stack the text above the image */
+        /* Add your desired styles for text */
+    }
+
+    /* Ensure text is legible on smaller screens */
+    @media (max-width: 768px) {
+        .text-over-image {
+            padding: 10px;
+            font-size: 14px; /* Adjust font size for smaller screens */
+        }
+    }
+    /* Individual styles for offsetting images and text */
+    .image-text-container:nth-child(1) .image-container {
+        transform: translateX(0%);
+    }
+
+    .image-text-container:nth-child(1) .text-over-image {
+        transform: translateX(0%);
+    }
+
+    .image-text-container:nth-child(2) .image-container {
+        transform: translateX(40%);
+    }
+
+    .image-text-container:nth-child(2) .text-over-image {
+        transform: translateX(40%);
+    }
+
+    .image-text-container:nth-child(3) .image-container {
+        transform: translateX(-60%);
+    }
+
+    .image-text-container:nth-child(3) .text-over-image {
+        transform: translateX(60%);
+    }
 }
 
+    /* Specific styles for each image to create offset */
+    .center-img {
+        margin-top: 20px;
+        transform: translateX(0%); /* Center image remains in place */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
 
-/*Footer Styling*/
+    .left-img {
+        margin-top: 30px; /* Slightly lower than the center image */
+        transform: translateX(20%); /* Shift to the left */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .right-img {
+        margin-top: 40px; /* Lower than both center and left images */
+        transform: translateX(30%); /* Shift to the right */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Accordion Styles */
+    .accordion-button {
+        width: 90%;
+        padding: 30px 50px;
+        text-align: center;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        font-size: 18px;
+        cursor: pointer;
+        outline: none;
+        transition: background-color 0.3s;
+        transform: skew(-20deg);
+        margin-left: 20px;
+        margin-right: 20px;
+        background-image: url('./assets/images/button-intro.jpg');
+        background-size: cover;
+        background-position: center;
+    }
+
+        .accordion-button:hover, .accordion-button:focus {
+            background-color: #45a049;
+        }
+
+        .accordion-button > * {
+            transform: skew(20deg);
+        }
+
+    .accordion-content {
+        padding: 0 15px;
+        background: white;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.6s ease;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+
+    /*Footer Styling
 .footer {
     background-color: #333;
     color: white;
@@ -313,131 +425,131 @@ button {
         align-items: center;
         padding: 0 2rem;
     }
-
-.social-media span {
-    margin-right: 1rem;
-}
-
-.social-media a {
-    color: white;
-    margin: 0 0.5rem;
-    font-size: 1.5rem;
-}
-
-.admin-login {
-    position: absolute;
-    bottom: 0.5rem;
-    right: 0.5rem;
-    font-size: 0.8rem;
-}
-
-    .admin-login .login-link {
-        color: white;
-        opacity: 0.5;
+*/
+    .social-media span {
+        margin-right: 1rem;
     }
 
-        .admin-login .login-link:hover,
-        .admin-login .login-link:focus {
-            opacity: 1;
-            text-decoration: none;
+    .social-media a {
+        color: white;
+        margin: 0 0.5rem;
+        font-size: 1.5rem;
+    }
+
+    .admin-login {
+        position: absolute;
+        bottom: 0.5rem;
+        right: 0.5rem;
+        font-size: 0.8rem;
+    }
+
+        .admin-login .login-link {
+            color: white;
+            opacity: 0.5;
         }
 
-/* Play.css container */
-.container-margin-top {
-    margin-top: 10px;
-    padding: 0 15px;
-    margin-block-end: 40px;
-}
+            .admin-login .login-link:hover,
+            .admin-login .login-link:focus {
+                opacity: 1;
+                text-decoration: none;
+            }
 
-.row, .card-columns {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between; /* Ensures even spacing between elements */
-}
-
-/* Card Component Styles */
-.card {
-    flex: 0 0 32%; /* Allows three cards per row with some margin */
-    margin-bottom: 20px; /* Space between card rows */
-}
-
-.card-img-top {
-    width: 100%; /* Full width of card */
-    height: auto; /* Maintain aspect ratio */
-    background-size: cover;
-    background-position: center;
-    padding: 10px;
-}
-
-.card-columns .card-img {
-    height: 330px;
-    background-position: center; /* Center the image */
-    background-repeat: no-repeat; /* Prevent image repetition */
-    background-size: cover; /* Cover the container with the image */
-    opacity: .8;
-}
-
-.card:hover {
-    transform: scale(1.05); /* Slightly enlarge cards on hover */
-    box-shadow: 0 10px 20px rgba(37,33,82,.12), 0 4px 8px rgba(37,33,82,.06);
-}
-
-.card .card-header, .card-footer {
-    text-align: center;
-    font-family: 'Sansita Swashed', sans-serif; /* Stylish font for headers and footers */
-    background: #fbfafd; /* Light background for footer */
-}
-
-/* Navigation Styles */
-a.navbar-brand {
-    font-family: 'Yellowtail', cursive;
-    font-size: xx-large;
-    text-align: center;
-}
-
-.nav-pills .nav-link.active, .nav-pills .show > .nav-link {
-    background-color: #1b6ec2; /* Active link background */
-}
-
-/* Button Styles */
-.btn-primary {
-    background-color: #252152; /* Primary button background */
-    border-color: #252152;
-}
-
-    .btn-primary:hover {
-        background-color: #e9a8a6; /* Hover state for primary buttons */
-        border-color: #e9a8a6;
+    /* Play.css container */
+    .container-margin-top {
+        margin-top: 10px;
+        padding: 0 15px;
+        margin-block-end: 40px;
     }
 
-/* Modal Component Styles */
-.modal {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: fixed;
-    z-index: 1000;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.5); /* Semi-transparent background */
-}
+    .row, .card-columns {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between; /* Ensures even spacing between elements */
+    }
 
-.modal-content {
-    background: white;
-    padding: 20px;
-    border-radius: 5px;
-    width: 90%;
-    max-width: 500px;
-    max-height: 80vh;
-    overflow-y: auto; /* Scrollable content */
-}
+    /* Card Component Styles */
+    .card {
+        flex: 0 0 32%; /* Allows three cards per row with some margin */
+        margin-bottom: 20px; /* Space between card rows */
+    }
 
-.close {
-    position: absolute;
-    top: 10px; /* Distance from the top of .modal-content */
-    right: 10px; /* Distance from the right of .modal-content */
-    font-size: 1.5em;
-    cursor: pointer;
-}
+    .card-img-top {
+        width: 100%; /* Full width of card */
+        height: auto; /* Maintain aspect ratio */
+        background-size: cover;
+        background-position: center;
+        padding: 10px;
+    }
+
+    .card-columns .card-img {
+        height: 330px;
+        background-position: center; /* Center the image */
+        background-repeat: no-repeat; /* Prevent image repetition */
+        background-size: cover; /* Cover the container with the image */
+        opacity: .8;
+    }
+
+    .card:hover {
+        transform: scale(1.05); /* Slightly enlarge cards on hover */
+        box-shadow: 0 10px 20px rgba(37,33,82,.12), 0 4px 8px rgba(37,33,82,.06);
+    }
+
+    .card .card-header, .card-footer {
+        text-align: center;
+        font-family: 'Sansita Swashed', sans-serif; /* Stylish font for headers and footers */
+        background: #fbfafd; /* Light background for footer */
+    }
+
+    /* Navigation Styles */
+    a.navbar-brand {
+        font-family: 'Yellowtail', cursive;
+        font-size: xx-large;
+        text-align: center;
+    }
+
+    .nav-pills .nav-link.active, .nav-pills .show > .nav-link {
+        background-color: #1b6ec2; /* Active link background */
+    }
+
+    /* Button Styles */
+    .btn-primary {
+        background-color: #252152; /* Primary button background */
+        border-color: #252152;
+    }
+
+        .btn-primary:hover {
+            background-color: #e9a8a6; /* Hover state for primary buttons */
+            border-color: #e9a8a6;
+        }
+
+    /* Modal Component Styles */
+    .modal {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: fixed;
+        z-index: 1000;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5); /* Semi-transparent background */
+    }
+
+    .modal-content {
+        background: white;
+        padding: 20px;
+        border-radius: 5px;
+        width: 90%;
+        max-width: 500px;
+        max-height: 80vh;
+        overflow-y: auto; /* Scrollable content */
+    }
+
+    .close {
+        position: absolute;
+        top: 10px; /* Distance from the top of .modal-content */
+        right: 10px; /* Distance from the right of .modal-content */
+        font-size: 1.5em;
+        cursor: pointer;
+    }

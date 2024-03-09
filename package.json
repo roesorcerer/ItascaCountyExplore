@@ -6,6 +6,7 @@
     "@popperjs/core": "^2.11.8",
     "@types/bootstrap": "^5.2.10",
     "bootstrap": "^5.3.3",
+    "font-awesome": "^4.7.0",
     "react-owl-carousel2": "^0.3.0",
     "react-slick": "^0.30.2",
     "react-toastify": "^10.0.4",
