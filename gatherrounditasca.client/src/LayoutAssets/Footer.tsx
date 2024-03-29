@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from 'react-icons/fa'; // You need to install react-icons for this to work
+//import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from 'react-icons/fa';  You need to install react-icons for this to work
 
 const Footer = () => {
     const navigate = useNavigate();

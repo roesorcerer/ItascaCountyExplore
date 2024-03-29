@@ -1,9 +1,14 @@
-import React from 'react';
+
+const handleClick = (e: { preventDefault: () => void; }) => {
+    e.preventDefault();
+};
 
 function AdminPage() {
-  return (
-    <p>Hello world!</p>
+    return (
+        
+       <div></div>                  
+
   );
-}
+};
 
 export default AdminPage;

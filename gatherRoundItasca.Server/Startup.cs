@@ -1,6 +1,7 @@
 ﻿using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using gatherRoundItasca.Server.Data;
+using gatherRoundItasca.Server.Models;
 using gatherRoundItasca.Server.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -9,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using System.Text.Json;
 
 namespace gatherRoundItasca.Server
 {
@@ -34,7 +36,7 @@ namespace gatherRoundItasca.Server
                 var connectionString = connectionStringSecret.Value.Value;
 
                 //configure DB file with SQL Server using the connection string
-                services.AddDbContext<ExploreItascaContext> (options =>              
+                services.AddDbContext<ExploreItascaContext>(options =>
                     options.UseSqlServer(connectionString), ServiceLifetime.Scoped);
             }
             else
@@ -42,10 +44,10 @@ namespace gatherRoundItasca.Server
                 //Fallback to local configuration if the key vault is not configured
                 services.AddDbContext<ExploreItascaContext>(options =>
                     options.UseSqlServer(Configuration.GetConnectionString("ExploreItascaContext")), ServiceLifetime.Scoped);
-             }
-            
-            
-              
+            }
+
+
+
             // Add MVC controllers to the service collection
             services.AddControllers();
             // Add other necessary services here...
@@ -56,7 +58,6 @@ namespace gatherRoundItasca.Server
             });
             // Add DataFileService to the service collection
             services.AddScoped<UpdatesDataService>();
-            services.AddScoped<DataFileService>();
 
             // Add EmailService and EmailSettings to the service collection
             services.Configure<EmailSettings>(Configuration.GetSection("EmailSettings"));
@@ -74,10 +75,31 @@ namespace gatherRoundItasca.Server
 
             });
         }
+
+
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            using (var scope = app.ApplicationServices.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+                try
+                {
+                    var context = services.GetRequiredService<ExploreItascaContext>();
+                    context.Database.EnsureCreated(); // Make sure the database is created
+                    var pathToJson = "/data/bestitascalocations.json"; // Update this path
+                    ExploreItascaContext.SeedFromJson(context, pathToJson);
+                }
+                catch (Exception ex)
+                {
+                    // Log the error if something goes wrong
+                    var logger = services.GetRequiredService<ILogger<Startup>>();
+                    logger.LogError(ex, "An error occurred seeding the DB.");
+                }
+            }
+        
             if (env.IsDevelopment())
             {
+
                 app.UseDeveloperExceptionPage();
                 // Enable middleware to serve generated Swagger as a JSON endpoint
                 app.UseSwagger();
@@ -102,15 +124,15 @@ namespace gatherRoundItasca.Server
             app.UseCors("MyAllowSpecificOrigins");
             app.UseAuthorization();
 
-
-
-
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers(); // Map Controller routes
                 // Map fallback to root for SPA
                 endpoints.MapFallbackToFile("index.html");
             });
+
         }
+
     }
 }
+

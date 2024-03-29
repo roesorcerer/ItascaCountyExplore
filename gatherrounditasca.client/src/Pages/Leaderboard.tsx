@@ -2,7 +2,37 @@ import * as React from 'react';
 import Header from '../LayoutAssets/Header';
 import Footer from '../LayoutAssets/Footer';
 
+//create interface for leaderboard so I can set the state
+interface Leaderboard {
+    playerId: string;
+    ranking: string;
+    locationsVisited: number;
+
+}
+
 const Leaderboard: React.FC = () => {
+    //set the state for the leaderboard
+    const [playerId, setPlayerId] = React.useState('');
+    const [ranking, setRanking] = React.useState('');
+    const [locationsVisited, setLocationsVisited] = React.useState(0);
+    const [leaderboard, setLeaderboard] = React.useState<Leaderboard[]>([]);
+
+React.useEffect(() => {
+        const fetchLeaderboard = async () => {
+            try {
+                const response = await fetch('http://localhost:5164/api/leaderboard');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                setLeaderboard(data);
+            } catch (error) {
+                console.error('Failed to fetch leaderboard:', error);
+            }
+        };
+
+        fetchLeaderboard();
+    }, []);
     return (
         <>
             <Header />

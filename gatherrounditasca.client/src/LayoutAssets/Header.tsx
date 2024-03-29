@@ -1,10 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Navbar, Nav } from 'react-bootstrap';
 import { NavLink } from 'react-router-dom';
 import logo from '../assets/imgs/header/logo-exploreitasca.png';
 
 
 const Header: React.FC = () => {
+    // State to manage burger menu visibility
+    const [isNavExpanded, setIsNavExpanded] = useState(false);
+
+    // Toggle function to update the state
+    const toggleNav = () => {
+        setIsNavExpanded(!isNavExpanded);
+    };
     return (     
         <>
         {/* Header section */}
@@ -26,7 +33,7 @@ const Header: React.FC = () => {
                                     </div>
                                 </Navbar.Brand>
                                     {/* Burger menu */ }
-                                    <span role="button" className="navbar-burger" aria-label="menu" aria-expanded="false" data-target="menu1">
+                                <span role="button" className="navbar-burger" aria-label="menu" aria-expanded="false" data-target="menu1" onClick={toggleNav}>
                                         <span aria-hidden="true"></span>
                                         <span aria-hidden="true"></span>
                                         <span aria-hidden="true"></span>
@@ -34,7 +41,7 @@ const Header: React.FC = () => {
                                
                                 {/* Menu and navigation */}
                                 {/* Menu starts here */} 
-                                <nav id="menu1" className="navbar-menu">
+                                <nav id="menu1" className={`navbar-menu ${isNavExpanded ? "is-active" : ""}`}>
                                     <div className="navbar-start">
                                         {/*Home Nav Menu Item */}
                                         <div className="navbar-item has-dropdown is-hoverable">                                            

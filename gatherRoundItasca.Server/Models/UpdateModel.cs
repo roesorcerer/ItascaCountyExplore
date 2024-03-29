@@ -7,6 +7,7 @@ namespace gatherRoundItasca.Server.Models
     public class UpdateModel
     {
         //ID reference for the update
+        [Key]
         public int UpdateNumber { get; set; }
         //date the update was made
         [Required]

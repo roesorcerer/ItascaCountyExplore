@@ -1,6 +1,9 @@
-﻿using gatherRoundItasca.Server.Models;
+﻿using gatherRoundItasca.Server.Data;
+using gatherRoundItasca.Server.Models;
 using gatherRoundItasca.Server.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -13,11 +16,11 @@ namespace gatherRoundItasca.Server.Controllers
     [Route("api/[controller]")]
     public class LocationsController : ControllerBase
     {
-        private readonly DataFileService _dataFileService;
+        private readonly ExploreItascaContext _context;
         // Constructor injecting the JsonFileAnimesService into the controller.
-        public LocationsController(DataFileService dataFileService)
+        public LocationsController(ExploreItascaContext context)
         {
-            _dataFileService = dataFileService;
+            _context = context;
         }
         // HTTP GET method to retrieve a collection of locations.
         // The method is asynchronous to allow non-blocking calls and database operations.
@@ -26,13 +29,10 @@ namespace gatherRoundItasca.Server.Controllers
         {
             try
             {
-                var locations = await _dataFileService.GetLocationsAsync();
-                if (locations == null || !locations.Any())
-                {
-                    return NotFound("Locations not found.");
-                }
+                var locations = await _context.Location.ToListAsync();
                 return Ok(locations);
             }
+
             catch (Exception ex)
             {
                 // Log the exception details here

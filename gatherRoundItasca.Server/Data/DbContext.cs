@@ -1,6 +1,7 @@
 ﻿using gatherRoundItasca.Server.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using System.Text.Json;
 using System.Xml.Linq;
 
 namespace gatherRoundItasca.Server.Data
@@ -21,12 +22,12 @@ namespace gatherRoundItasca.Server.Data
 
         // Represents the Locations table in the database. 
         // DbSet<TEntity> can be used to query and save instances of TEntity.
-        public DbSet<LocationModel> Locations { get; set; }
+        public DbSet<LocationModel> Location { get; set; }
 
 
         // Represents the Players table in the database. 
         // DbSet<TEntity> can be used to query and save instances of TEntity.
-        public DbSet<playerDataModel> Players { get; set; }
+        public DbSet<PlayerDataModel> Players { get; set; }
 
         // Represents the Updates table in the database. 
         // DbSet<TEntity> can be used to query and save instances of TEntity.
@@ -34,10 +35,31 @@ namespace gatherRoundItasca.Server.Data
         // Override this method to further configure the model that was discovered by convention from the entity types
         // exposed in DbSet properties on your derived context.
 
-
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        public static void SeedFromJson(ExploreItascaContext context, string filePath)
         {
-            // Configure entity relationships and database constraints here.
+            if (!context.Location.Any())
+            {
+                var jsonData = File.ReadAllText(filePath);
+                var locations = JsonSerializer.Deserialize<List<LocationModel>>(jsonData);
+                if (locations != null)
+                    if (locations != null)
+                    {
+                        foreach (var location in locations)
+                        {
+                            // Before adding each location, you could further check if a specific, unique record already exists to make this even more robust.
+                            // For example, if each location has a unique Title or Id that should not be duplicated:
+                            // if (!context.Locations.Any(l => l.Title == location.Title)) 
+                            context.Location.Add(location);
+                        }                   
+                    context.Location.AddRange(locations);
+                    context.SaveChanges();                
+            }
+        }
+    }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            // Configure entity relationships and database constraints here - seeding at Startup
         }
 
         // This method is only called if the DbContextOptions are not configured in the DI container.

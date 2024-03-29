@@ -91,13 +91,31 @@ const Join: React.FC = () => {
     return (
         <>
             <Header />
-            <div className="container-fluid">
+            {/* Breadcrumb Navigation Links in Breadcrumb - Great idea!*/} 
+            <div className="breadcrumb-wrapper">
                 <div className="container-fluid">
-            <h1>Sign up to play now</h1>
-            <h3>Join the adventure around some of the sights around Itasca County. Enter your email address to
+                    <nav aria-label="breadcrumb" role="navigation">
+                        <ol className="breadcrumb">
+                            <li className="breadcrumb-item"><a href="/">Home</a></li>
+                            <li className="breadcrumb-item active" aria-current="page">Join</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+            <div className="container-fluid">
+                <div className="columns">
+                    <div className="column is-12">
+            <div className="has-text-centered">
+                        <h2 className="lg-title">Answer a few simple questions to play!</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <section className="pt-5 padding-bottom">
+                <h3>Join the adventure around some of the sights around Itasca County. Enter your email address to
                     receive a unique player identification number to get started and watch yourself climb the ranks!</h3>
                 {errorMessage && <div className="alert alert-danger" role="alert">{errorMessage}</div>}
-
+</section>
             <form onSubmit={handleSubmit}>
                 <div className="mb-3" style={{ maxWidth: '300px', margin: 'auto' }}>
                     <label htmlFor="emailInput" className="form-label">Email address</label>
@@ -146,11 +164,12 @@ const Join: React.FC = () => {
                                 <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Close</button>
                             </div>
                         </div>
-                    </div>
-                </div>
+                         </div>  
+                        </div>
+                
                 )}
-            </div>
-            </div>
+           
+          
             <Footer />
         </>
     );

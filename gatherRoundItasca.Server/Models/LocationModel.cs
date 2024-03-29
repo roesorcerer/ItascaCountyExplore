@@ -8,6 +8,7 @@ namespace gatherRoundItasca.Server.Models
     public class LocationModel
     {
         //ID reference for the location
+        [Key]
         public int Id { get; set; }
         //date that the phto was taken at the location
         [Required]
@@ -35,17 +36,7 @@ namespace gatherRoundItasca.Server.Models
         [Required]
         public string? Riddle { get; set; }
 
-        //ratings of the location by the webdev
-        [JsonPropertyName("Ratings-rowan")]
-        [Required]
-        public List<int>? RatingsRowan { get; set; } = new List<int>();
-
-        //ratings of the location by the enduser
-        [JsonPropertyName("Ratings-audience")]
-        [Required]
-        public List<int>? RatingsUser { get; set; } = new List<int>();
-
         //Json serializer to serialize the location model
-        public override string ToString() => JsonSerializer.Serialize<LocationModel>(this);
+       // public override string ToString() => JsonSerializer.Serialize<LocationModel>(this);
     }
 }

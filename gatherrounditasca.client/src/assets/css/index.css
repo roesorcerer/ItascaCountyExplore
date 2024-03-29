@@ -3,7 +3,7 @@
 
 
 
-/* General Resets */
+/* General Resets
 html, body {
     margin: 0;
     padding: 0;
@@ -15,7 +15,7 @@ html, body {
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-}
+} */
 
 /* Typography */
 h1 {
@@ -91,10 +91,10 @@ button {
     max-width: 100px; /* Adjust based on your logo's size */
     max-height: 100px; /* Adjust based on your logo's size */
     position: absolute;
-    top: -5px; /* Adjust based on desired spacing from top */
-    left: -80px; /* Adjust based on desired spacing from the left */
+    top: -10px; /* Adjust based on desired spacing from top */
+    left: -60px; /* Adjust based on desired spacing from the left */
     border-radius: 12px; /* Optional: if you want rounded corners */
-    opacity: 0.75; /*Opacity for the logo*/
+    opacity: 0.90; /*Opacity for the logo*/
 }
 /* Clearfix for floated logo */
 .navbar-brand::after {
@@ -198,11 +198,11 @@ button {
     background-image: url('/assets/imgs/fashion/bannertampschoolhouse.jpg');
     background-size: auto;
     background-position: center;
-    height: 40vh;
+    height: 60vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    border-radius: 25px;
+    border-radius: 10px;
     overflow: hidden;
 }
 
@@ -230,7 +230,7 @@ button {
     content: "";
     left: 0px;
     right: 0px;
-    border-radius: 20px;
+    border-radius: 10px;
     margin: 0 auto;
     width: 70%;
     bottom: -120px;
@@ -274,7 +274,7 @@ button {
     height: 200px; /* Fixed height for consistency */
     width: 100%;
     display: block;
-    border-radius: 25px;
+    border-radius: 10px;
     overflow: hidden;
     transition: transform 0.3s ease-in-out; /* Smooth transition for hover effect */
     position: relative; /* Needed for z-index to take effect */
@@ -294,7 +294,7 @@ button {
         /* Ensure the text container has a background if it overlaps directly with images for readability */
         background-color: rgba(255, 255, 255, 0.9); /* Semi-transparent background */
         padding: 30px; /* Optional: Adds some spacing inside the text container */
-        border-radius: 20px; /* Optional: Rounds the corners */
+        border-radius: 10px; /* Optional: Rounds the corners */
         top: 20px; /* Distance from the top of the container */
         right: 20px; /* Distance from the right of the container */
     }
@@ -314,6 +314,7 @@ button {
         left: 50%; /* Center horizontally */
         transform: translate(-50%, -50%); /* Adjust position to be centered on top of the image */
         padding: 20px;
+        padding-left: 40px; /* Increase left padding to push text more to the right */
         background: rgba(255, 255, 255, 0.9); /* Semi-transparent background */
         border-radius: 15px; /* Rounded corners to match the image */
         text-align: center; /* Center the text within the box */
@@ -363,13 +364,13 @@ button {
 
     .left-img {
         margin-top: 30px; /* Slightly lower than the center image */
-        transform: translateX(20%); /* Shift to the left */
+        transform: translateX(10%); /* Shift to the left */
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
 
     .right-img {
         margin-top: 40px; /* Lower than both center and left images */
-        transform: translateX(30%); /* Shift to the right */
+        transform: translateX(20%); /* Shift to the right */
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
 
@@ -468,37 +469,47 @@ button {
     }
 
     /* Card Component Styles */
-    .card {
-        flex: 0 0 32%; /* Allows three cards per row with some margin */
-        margin-bottom: 20px; /* Space between card rows */
-    }
+.card {
+    flex: 0 0 32%; /* Allows three cards per row with some margin */
+    margin-bottom: 20px; /* Space between card rows */
+    display: flex; /* Added for consistency in styling */
+    justify-content: center; /* Center card content horizontally */
+    align-items: center; /* Center card content vertically */
+    overflow: hidden; /* Ensure content does not overflow */
+    border-radius: 15px; /* Match border radius */
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out; /* Smooth transition for hover effect */
+}
 
-    .card-img-top {
-        width: 100%; /* Full width of card */
-        height: auto; /* Maintain aspect ratio */
-        background-size: cover;
-        background-position: center;
-        padding: 10px;
-    }
+.card-img-top {
+    width: 100%; /* Full width of card */
+    height: auto; /* Maintain aspect ratio */
+    max-height: 300px; /* Ensure the image is no taller than the container */
+    max-width: 200px; /* Ensure the image is no wider than the container */
+    background-size: cover; /* Cover the container with the image */
+    background-position: center; /* Center the image */
+    opacity: .8; /* Match opacity */
+    padding: 20px; /* Add some padding to the image */
+}
 
-    .card-columns .card-img {
-        height: 330px;
-        background-position: center; /* Center the image */
-        background-repeat: no-repeat; /* Prevent image repetition */
-        background-size: cover; /* Cover the container with the image */
-        opacity: .8;
-    }
+.card-columns .card-img {
+    max-height: 600px; /* Ensure the image is no taller than the container */
+    max-width: 400px; /* Ensure the image is no wider than the container */
+    background-position: center; /* Center the image */
+    background-repeat: no-repeat; /* Prevent image repetition */
+    background-size: cover; /* Cover the container with the image */
+    opacity: .8;
+}
 
-    .card:hover {
-        transform: scale(1.05); /* Slightly enlarge cards on hover */
-        box-shadow: 0 10px 20px rgba(37,33,82,.12), 0 4px 8px rgba(37,33,82,.06);
-    }
+.card:hover {
+    transform: scale(1.05); /* Slightly enlarge cards on hover */
+    box-shadow: 0 10px 20px rgba(37,33,82,.12), 0 4px 8px rgba(37,33,82,.06); /* Enhanced shadow on hover */
+}
 
-    .card .card-header, .card-footer {
-        text-align: center;
-        font-family: 'Sansita Swashed', sans-serif; /* Stylish font for headers and footers */
-        background: #fbfafd; /* Light background for footer */
-    }
+.card .card-header, .card-footer {
+    text-align: center;
+    font-family: 'Sansita Swashed', sans-serif; /* Stylish font for headers and footers */
+    background: #fbfafd; /* Light background for footer */
+}
 
     /* Navigation Styles */
     a.navbar-brand {

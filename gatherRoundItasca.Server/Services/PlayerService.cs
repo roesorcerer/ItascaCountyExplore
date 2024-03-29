@@ -10,7 +10,7 @@ namespace gatherRoundItasca.Server.Services
         {
             // Load the exsisting players from the JSON file
             var jsonData = System.IO.File.ReadAllText(_jsonFilePath);
-            var playerList = JsonConvert.DeserializeObject<List<playerDataModel>>(jsonData) ?? new List<playerDataModel>();
+            var playerList = JsonConvert.DeserializeObject<List<PlayerDataModel>>(jsonData) ?? new List<PlayerDataModel>();
             // Find the player with the given playerID
             var player = playerList.FirstOrDefault(p => p.PlayerId == playerId);
             if (player != null)

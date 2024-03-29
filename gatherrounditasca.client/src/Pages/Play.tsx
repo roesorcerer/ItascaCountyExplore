@@ -122,9 +122,8 @@ const Play: React.FC = () => {
                                 <div className="card text-center" key={locations.id}>
                                     <div className="card-header">Explore Location: {locations.title}</div>
                                     <img src={locations.image} className="card-img-top" alt={locations.title} />
-
                                     <div className="card-body">
-                                        <button onClick={() => handleOpenModal(locations.id)} className="btn btn-primary">
+                                        <button onClick={() => handleOpenModal(locations.id)} className="btn btn-grey mt-4">
                                             Solve Riddle
                                         </button>
                                     </div>
