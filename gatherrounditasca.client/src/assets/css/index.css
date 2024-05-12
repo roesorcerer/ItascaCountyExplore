@@ -195,8 +195,8 @@ button {
 /*Customer Styles for banner-img*/
 .banner-img {
     margin-top: 20px;
-    background-image: url('/assets/imgs/fashion/bannertampschoolhouse.jpg');
-    background-size: auto;
+    background-image: url('/assets/imgs/homepage/oldcentrealschool.jpg');
+    background-size: cover;
     background-position: center;
     height: 60vh;
     display: flex;
@@ -271,8 +271,8 @@ button {
     background-size: auto;
     background-repeat: no-repeat;
     background-position: center;
-    height: 200px; /* Fixed height for consistency */
-    width: 100%;
+    height: 100px; /* Fixed height for consistency */
+    width: 200px;
     display: block;
     border-radius: 10px;
     overflow: hidden;
@@ -293,9 +293,9 @@ button {
         z-index: 2; /* Higher than the image's z-index */
         /* Ensure the text container has a background if it overlaps directly with images for readability */
         background-color: rgba(255, 255, 255, 0.9); /* Semi-transparent background */
-        padding: 30px; /* Optional: Adds some spacing inside the text container */
+        padding: 10px; /* Optional: Adds some spacing inside the text container */
         border-radius: 10px; /* Optional: Rounds the corners */
-        top: 20px; /* Distance from the top of the container */
+        top: 10px; /* Distance from the top of the container */
         right: 20px; /* Distance from the right of the container */
     }
 
@@ -357,22 +357,28 @@ button {
 
     /* Specific styles for each image to create offset */
     .center-img {
+        width: 900px; /* Full width of the container */
+        height: 300px; /* Fixed height for consistency */
         margin-top: 20px;
         transform: translateX(0%); /* Center image remains in place */
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
 
-    .left-img {
-        margin-top: 30px; /* Slightly lower than the center image */
-        transform: translateX(10%); /* Shift to the left */
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
+.left-img {
+    width: 900px; /* Full width of the container */
+    height: 300px; /* Fixed height for consistency */
+    margin-top: 20px; /* Slightly lower than the center image */
+    transform: translateX(2.5%); /* Shift to the left */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
 
-    .right-img {
-        margin-top: 40px; /* Lower than both center and left images */
-        transform: translateX(20%); /* Shift to the right */
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
+.right-img {
+    width: 900px; /* Full width of the container */
+    height: 300px; /* Fixed height for consistency */
+    margin-top: 20px; /* Lower than both center and left images */
+    transform: translateX(5%); /* Shift to the right */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
 
     /* Accordion Styles */
     .accordion-button {
@@ -483,8 +489,8 @@ button {
 .card-img-top {
     width: 100%; /* Full width of card */
     height: auto; /* Maintain aspect ratio */
-    max-height: 300px; /* Ensure the image is no taller than the container */
-    max-width: 200px; /* Ensure the image is no wider than the container */
+    max-height: 150px; /* Ensure the image is no taller than the container */
+    max-width: 150px; /* Ensure the image is no wider than the container */
     background-size: cover; /* Cover the container with the image */
     background-position: center; /* Center the image */
     opacity: .8; /* Match opacity */

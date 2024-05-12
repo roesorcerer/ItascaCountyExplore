@@ -3,11 +3,9 @@ import { Navbar, Nav } from 'react-bootstrap';
 import { NavLink } from 'react-router-dom';
 import logo from '../assets/imgs/header/logo-exploreitasca.png';
 
-
 const Header: React.FC = () => {
     // State to manage burger menu visibility
     const [isNavExpanded, setIsNavExpanded] = useState(false);
-
     // Toggle function to update the state
     const toggleNav = () => {
         setIsNavExpanded(!isNavExpanded);
@@ -27,8 +25,7 @@ const Header: React.FC = () => {
                                     <div className="navbar-brand">
                                         <div className="logo-container">
                                             <img src={logo} alt="Logo" className="logo-img" />
-                                        </div>
-                                
+                                        </div>                                
                                         <span className="header-title">Itasca Explorers</span>
                                     </div>
                                 </Navbar.Brand>
@@ -37,13 +34,13 @@ const Header: React.FC = () => {
                                         <span aria-hidden="true"></span>
                                         <span aria-hidden="true"></span>
                                         <span aria-hidden="true"></span>
-                                    </span>
-                               
+                                    </span>                               
                                 {/* Menu and navigation */}
                                 {/* Menu starts here */} 
                                 <nav id="menu1" className={`navbar-menu ${isNavExpanded ? "is-active" : ""}`}>
                                     <div className="navbar-start">
                                         {/*Home Nav Menu Item */}
+                                        <div className="d-flex flex-row">
                                         <div className="navbar-item has-dropdown is-hoverable">                                            
                                         <Nav.Item>
                                                 <NavLink to="/" className="navbar-link">Home</NavLink> 
@@ -73,32 +70,16 @@ const Header: React.FC = () => {
                                                 <NavLink to="/leaderboard" className="navbar-link">Leaderboard</NavLink>
                                             </Nav.Item>
                                         </div>
-
-
                                         {/* Add more Nav.Links or LinkContainer as needed */}
-
-                                          
-                                    
-                                 
+</div> 
                                         {/* Add more Nav.Links or LinkContainer as needed */}
-                                        <div className="navbar-end">
-                                            <div className="navbar-item">
-                                                <ul className="header-socials-2 list-inline">
-                                                    <li className="list-inline-item"><a href="#"><i className="ti-facebook"></i></a></li>
-                                                    <li className="list-inline-item"><a href="#"><i className="ti-twitter"></i></a></li>
-                                                    <li className="list-inline-item"><a href="#"><i className="ti-linkedin"></i></a></li>
-                                                    <li className="list-inline-item"><a href="#"><i className="ti-pinterest"></i></a></li>
-                                                </ul>
-                                            </div>
-                                    
                                 </div>
-                            </div>
                                 </nav>
                         </nav>
                     </div>
                 </div>
             </div>
-            </header >
+            </header>
 
 </>
     );

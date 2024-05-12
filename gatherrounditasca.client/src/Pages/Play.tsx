@@ -32,6 +32,11 @@ const Play: React.FC = () => {
             console.error("Geolocation is not supported by this browser.");
         }
     };
+
+    const parseToMarkDown = (str: string): string => {
+        return str.replace(/\\n/g, "\n");
+    };
+
     useEffect(() => {
         const fetchLocations = async () => {
             try {
@@ -145,10 +150,9 @@ const Play: React.FC = () => {
 
                                 {/* Example: Assuming your location object has a 'riddle' property */}
                                 <div>
-                                    {selectedLocation?.riddle.split('\n').map((line, index) => (
+                                    {parseToMarkDown(selectedLocation.riddle).split('\n').map((line, index) => (
                                         <React.Fragment key={index}>
-                                            {line}
-                                            <br />
+                                            {line}<br />
                                         </React.Fragment>
                                     ))}
                                 </div>

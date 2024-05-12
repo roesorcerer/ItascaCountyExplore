@@ -1,8 +1,8 @@
-import infoIcon from '..//assets/imgs/fashion/img-1.jpg';
+import infoIcon from '..//assets/imgs/fashion/mn-gr-fall.jpg';
 import infoIcon2 from '..//assets/imgs/fashion/img-2.jpg';
 import infoIcon3 from '..//assets/imgs/fashion/img-3.jpg';
 import { Link } from 'react-router-dom';
-import titleImg from '../assets/imgs/homepage/oldcentralschool-inside.jpg';
+import titleImg from '../assets/imgs/homepage/oldcentrealschool.jpg';
 
 
 const Introduction = () => {
@@ -10,7 +10,9 @@ const Introduction = () => {
     const images = [
         {
             src: infoIcon, className: "center-img", text: "Create a PlayerID", title: "Go on a new kind of adventure",
-            detail: "Start by answering a few simple questions. These questions will help generate you a unique number to play so you are able to track your progress." },
+            alt: "https://www.planetware.com/minnesota/grand-rapids-us-mn-gr.htm",
+            detail: "Start by answering a few simple questions. These questions will help generate you a unique number to play so you are able to track your progress.",
+        },
         {
             src: infoIcon2, className: "left-img", text: "Search through Locations", title: "Search through Locations",
             detail: "Look through the locations and see if you can identify any local spots. See if you can guess the location."
@@ -44,7 +46,7 @@ const Introduction = () => {
                                 <div className="post-title">
                                     <Link to="/about"><h2>Sign up now</h2></Link></div>
                                 <div className="post-content">
-                                    <strong>Travel Through Grand Rapids and see what little gems it has to offer.</strong>
+                                    <strong>Travel Through Grand Rapids and its sourrounding areas to see what little gems it has to offer.</strong>
                                     <p>Take the limited chance to participate and learn about the area around you in a new and fun way.</p>
                                     <Link to="/play" className="btn btn-grey mt-4">Play Now</Link>
                                 </div>

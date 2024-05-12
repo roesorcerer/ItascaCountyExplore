@@ -8,7 +8,7 @@ import Footer from '../LayoutAssets/Footer';
 
 const HomePage: React.FC = () => {
     return (
-        <div>
+        <div className="d-flex flex-column">
             <Header />
             <Introduction />
             <LastestUpdates />
