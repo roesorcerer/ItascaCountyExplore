@@ -1,0 +1,237 @@
+.itascafinds__header {
+  /*What the entire header is wrapped in. */
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4rem 6rem;
+  margin-top: -3rem;
+  padding-top: 0;
+}
+
+.itascafinds__header-wrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 1200px;
+  transform: scale(0.6); /* Scale everything to 60% */
+  transform-origin: top left; /* Ensure scaling starts from the top left */
+  width: 167.88%; /* Compensate for the 60% scaling to maintain layout width */
+  height: 166.67%; /* Compensate for the 60% scaling to maintain layout height */
+}
+
+.itascafinds__header-content {
+  /*Box for header content*/
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  flex-direction: column;
+
+  margin-right: 5rem;
+}
+
+.itascafinds__header-content h1 {
+  /*Header style for font and size*/
+  font-family: var(--font-family);
+  font-weight: 800;
+  font-size: 55px;
+  line-height: 60px;
+  letter-spacing: -0.04em;
+  margin: 0;
+}
+
+.itascafinds__header-content p {
+  font-family: var(--font-family);
+  font-style: normal;
+  font-weight: normal;
+  font-size: 20px;
+  line-height: 27px;
+
+  color: var(--color-text);
+
+  margin-top: 1.5rem;
+}
+
+.itascafinds__header-content__input {
+  width: 100%;
+  margin: 2rem 0 1rem;
+  display: flex;
+}
+
+.itascafinds__header-content__input input {
+  flex: 2;
+  width: 100%;
+  min-height: 50px;
+  /*Targetting the email input box*/
+  background: var(--color-footer);
+  border-radius: 5px 5px 5px 5px;
+  font-family: var(--font-family);
+  font-size: 20px;
+  line-height: 27px;
+  border: 2px solid var(--color-footer);
+  padding: 0 1rem;
+  outline: none;
+  color: #fff;
+  border-radius: 5px 0px 0px 5px;
+  color: #3d6184;
+}
+
+.itascafinds__header-content__input button {
+  /*Button styles*/
+  flex: 0.6;
+  width: 100%;
+  min-height: 50px;
+
+  background: #ff4820;
+  border-radius: 0px 5px 5px 0px;
+  font-family: var(--font-family);
+
+  font-weight: bold;
+  font-size: 20px;
+  line-height: 27px;
+  color: #fff;
+  cursor: pointer;
+  outline: none;
+  padding: 0 1rem;
+  border: none;
+}
+
+.itascafinds__header-content__people {
+  /*container for image and text*/
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+
+  margin-top: 2rem;
+}
+
+.itascafinds__header-content__people img {
+  /*tagetting only the profile images*/
+  width: 181.79px;
+  height: 38px;
+}
+
+.itascafinds__header-content__people p {
+  /*tagetting only text beside the profile images*/
+  margin: 0 0 0 1rem;
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 38px;
+
+  color: #4f49ef;
+  text-align: center;
+}
+
+.itascafinds__header-image {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 0 10rem 3rem;
+}
+
+.itascafinds__header-image img {
+  width: 400px; /* Fixed width */
+  height: auto;
+  min-width: 400px; /* Ensures the image does not shrink */
+}
+
+@media screen and (max-width: 1050px) {
+  .itascafinds__header {
+    flex-direction: column;
+    padding: 1rem 1.5rem;
+    transform: scale(0.8); /* Adjust scale for smaller screens */
+    transform-origin: center top; /* Ensure scaling starts from the top left */
+    width: 164.88%; /* Compensate for the 60% scaling to maintain layout width */
+    height: 166.67%;
+  }
+
+  .itascafinds__header-content {
+    margin-right: 1rem;
+    margin-bottom: 3rem;
+    width: 100%;
+  }
+  .itascafinds__header-image {
+    width: 100%;
+    margin-top: 2rem;
+  }
+
+  .itascafinds__header-image img {
+    width: 100%;
+    max-width: 600px; /* Ensures the image does not grow beyond 600px */
+    height: auto;
+  }
+}
+
+@media screen and (max-width: 650px) {
+  .itascafinds__header h1 {
+    font-size: 48px;
+    line-height: 60px;
+  }
+
+  .itascafinds__header p {
+    font-size: 16px;
+    line-height: 24px;
+  }
+  .itascafinds__header-content__people {
+    flex-direction: column;
+  }
+  .itascafinds__header-content__people p {
+    margin: 0;
+  }
+  .itascafinds__header-content__input input,
+  .itascafinds__header-content__input button {
+    font-size: 16px;
+    line-height: 24px;
+  }
+  .itascafinds__header-image {
+    width: 100%;
+    margin-top: 2rem;
+  }
+
+  .itascafinds__header-image img {
+    width: 100%;
+    max-width: 600px; /* Ensures the image does not grow beyond 600px */
+    height: auto;
+  }
+}
+
+@media screen and (max-width: 490px) {
+  .itascafinds__header {
+    flex-direction: column;
+    padding: 1rem 1.5rem;
+    transform: scale(0.4); /* Adjust scale for smaller screens */
+    transform-origin: center top; /* Ensure scaling starts from the top left */
+    width: 164.88%; /* Compensate for the 60% scaling to maintain layout width */
+    height: 166.67%;
+  }
+  .itascafinds__header h1 {
+    font-size: 36px;
+    line-height: 48px;
+  }
+
+  .itascafinds__header p {
+    font-size: 14px;
+    line-height: 24px;
+  }
+  .itascafinds__header-content__input input,
+  .itascafinds__header-content__input button {
+    font-size: 12px;
+    line-height: 16px;
+  }
+  .itascafinds__header-image {
+    width: 100%;
+    margin-top: 2rem;
+  }
+
+  .itascafinds__header-image img {
+    width: 100%;
+    max-width: 600px; /* Ensures the image does not grow beyond 600px */
+    height: auto;
+  }
+}
