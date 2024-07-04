@@ -1,69 +1,188 @@
 import React, { useState } from "react";
+import { NavLink } from "react-router-dom";
 import "./navbar.css";
-import { RiMenu3Line, RiCloseLin, RiCloseLine } from "react-icons/ri";
+import { RiMenu3Line, RiCloseLine } from "react-icons/ri";
 import logo from "../../assets/IQ_logo.png";
 
-const Menu = () => (
-  <>
-    <p>
-      <a href="#home">Home</a>
-    </p>
-    <p>
-      <a href="#home">How it Works</a>
-    </p>
-    <p>
-      <a href="#home">Suggest Location</a>
-    </p>
-    <p>
-      <a href="#home">Leaderboard</a>
-    </p>
-  </>
-);
+/*mui imports*/
+import AppBar from "@mui/material/AppBar";
+import Box from "@mui/material/Box";
+import Toolbar from "@mui/material/Toolbar";
+import IconButton from "@mui/material/IconButton";
+import Typography from "@mui/material/Typography";
+import Menu from "@mui/material/Menu";
+import MenuIcon from "@mui/icons-material/Menu";
+import Container from "@mui/material/Container";
+import Avatar from "@mui/material/Avatar";
+import Button from "@mui/material/Button";
+import Tooltip from "@mui/material/Tooltip";
+import MenuItem from "@mui/material/MenuItem";
+import HikingIcon from "@mui/icons-material/Hiking";
+
+/*pages array of various sites*/
+const pages = [
+  { name: "Home", path: "/" },
+  { name: "How it Works", path: "/howitworks" },
+  { name: "Suggest Location", path: "/suggestlocation" },
+  { name: "Leaderboard", path: "/leaderboard" },
+  { name: "Quests", path: "/quests" },
+];
+
+/*settings array for drop down on user login */
+const settings = ["Profile", "Account", "Dashboard", "Logout"];
 
 // BEM Block Element Modifier for classname naming convention for CSS
 const Navbar = () => {
   const [toggleMenu, setToggleMenu] = useState(false); //variable declaration for mobile menu and function to hold action.
+  const [anchorElNav, setAnchorElNav] = useState(null);
+  const [anchorElUser, setAnchorElUser] = useState(null);
+
+  const handleOpenNavMenu = (event) => {
+    setAnchorElNav(event.currentTarget);
+  };
+
+  const handleOpenUserMenu = (event) => {
+    setAnchorElUser(event.currentTarget);
+  };
+
+  const handleCloseNavMenu = () => {
+    setAnchorElNav(null);
+  };
+
+  const handleCloseUserMenu = () => {
+    setAnchorElUser(null);
+  };
+
   return (
-    <nav className="itascafinds__navbar">
-      <div className="itascafinds__navbar-links">
-        <div className="itascafinds__navbar-links_logo">
-          <img src={logo} alt="logo for Itasca Quest" />
-        </div>
-        <div className="itascafinds__navbar-links_container">
-          <Menu />
-        </div>
-      </div>
-      <div className="itascafinds__navbar-sign">
-        <p>Sign Up</p>
-        <button type="button">Sign In</button>
-      </div>
-      <div className="itascafinds__navbar-menu">
-        {toggleMenu ? (
-          <RiCloseLine
-            color="#121010"
-            size={27}
-            onClick={() => setToggleMenu(false)}
-          />
-        ) : (
-          <RiMenu3Line
-            color="#121010"
-            size={27}
-            onClick={() => setToggleMenu(true)}
-          />
-        )}
-        {toggleMenu && (
-          <div className="itascafinds__navbar-menu_container scale-up-center">
-            <div className="itascafinds__navbar-menu_container-links">
-              <Menu />
-              <div className="itascafinds__navbar-container-links-sign">
-                <p>Sign Up</p>
-                <button type="button">Sign In</button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </nav>
+    <AppBar position="static">
+      <Container maxWidth="xl">
+        <Toolbar disableGutters>
+          <HikingIcon sx={{ display: { xs: "none", md: "flex" }, mr: 1 }} />
+          <Typography
+            variant="h6"
+            noWrap
+            component="a"
+            href="#app-bar-with-responsive-menu"
+            sx={{
+              mr: 2,
+              display: { xs: "none", md: "flex" },
+              fontFamily: "monospace",
+              letterSpacing: ".3rem",
+              color: "inherit",
+              textDecoration: "none",
+            }}
+          >
+            Itasca Quest
+          </Typography>
+
+          <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
+            <IconButton
+              size="large"
+              aria-label="account of current user"
+              aria-controls="menu-appbar"
+              aria-haspopup="true"
+              onClick={handleOpenNavMenu}
+              color="inherit"
+            >
+              <MenuIcon />
+            </IconButton>
+            <Menu
+              id="menu-appbar"
+              anchorEl={anchorElNav}
+              anchorOrigin={{
+                vertical: "bottom",
+                horizontal: "left",
+              }}
+              keepMounted
+              transformOrigin={{
+                vertical: "top",
+                horizontal: "left",
+              }}
+              open={Boolean(anchorElNav)}
+              onClose={handleCloseNavMenu}
+              sx={{
+                display: { xs: "block", md: "none" },
+              }}
+            >
+              {pages.map((page) => (
+                <MenuItem key={page.name} onClick={handleCloseNavMenu}>
+                  <NavLink
+                    to={page.path}
+                    style={{ textDecoration: "none", color: "inherit" }}
+                  >
+                    <Typography textAlign="center">{page.name}</Typography>
+                  </NavLink>
+                </MenuItem>
+              ))}
+            </Menu>
+          </Box>
+          <HikingIcon sx={{ display: { xs: "flex", md: "none" }, mr: 1 }} />
+          <Typography
+            variant="h5"
+            noWrap
+            component="a"
+            href="#app-bar-with-responsive-menu"
+            sx={{
+              mr: 2,
+              display: { xs: "flex", md: "none" },
+              flexGrow: 1,
+              fontFamily: "monospace",
+              fontWeight: 700,
+              letterSpacing: ".3rem",
+              color: "inherit",
+              textDecoration: "none",
+            }}
+          >
+            Itasca Quest
+          </Typography>
+          <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
+            {pages.map((page) => (
+              <MenuItem
+                key={page.path}
+                onClick={handleCloseNavMenu}
+                sx={{ my: 2, color: "white", display: "block" }}
+              >
+                <NavLink
+                  to={page.path}
+                  style={{ textDecoration: "none", color: "inherit" }}
+                >
+                  <Typography textAlign="center">{page.name}</Typography>
+                </NavLink>
+              </MenuItem>
+            ))}
+          </Box>
+          <Box sx={{ flexGrow: 0 }}>
+            <Tooltip title="Open settings">
+              <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+                <Avatar alt="Remy Sharp" src="" />
+              </IconButton>
+            </Tooltip>
+            <Menu
+              sx={{ mt: "45px" }}
+              id="menu-appbar"
+              anchorEl={anchorElUser}
+              anchorOrigin={{
+                vertical: "top",
+                horizontal: "right",
+              }}
+              keepMounted
+              transformOrigin={{
+                vertical: "top",
+                horizontal: "right",
+              }}
+              open={Boolean(anchorElUser)}
+              onClose={handleCloseUserMenu}
+            >
+              {settings.map((setting) => (
+                <MenuItem key={setting} onClick={handleCloseUserMenu}>
+                  <Typography textAlign="center">{setting}</Typography>
+                </MenuItem>
+              ))}
+            </Menu>
+          </Box>
+        </Toolbar>
+      </Container>
+    </AppBar>
   );
 };
 

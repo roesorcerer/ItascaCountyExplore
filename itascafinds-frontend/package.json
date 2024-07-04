@@ -3,6 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.5",
+    "@fontsource/roboto": "^5.0.13",
+    "@mui/icons-material": "^5.15.21",
+    "@mui/joy": "^5.0.0-beta.36",
+    "@mui/material": "^5.15.21",
+    "@mui/styled-engine-sc": "^6.0.0-alpha.18",
     "@react-oauth/google": "^0.12.1",
     "@sanity/client": "^6.18.3",
     "@sanity/image-url": "^1.0.2",
@@ -16,8 +23,13 @@
     "react-masonry-css": "^1.0.16",
     "react-router-dom": "^6.23.1",
     "react-scripts": "^5.0.1",
+    "styled-components": "^6.1.11",
     "uuid": "^9.0.1",
     "web-vitals": "^2.1.4"
+  },
+  "keywords": [],
+  "alias": {
+    "@mui/styled-engine": "@mui/styled-engine-sc"
   },
   "scripts": {
     "start": "react-scripts start",
