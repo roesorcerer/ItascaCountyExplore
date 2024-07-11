@@ -1,73 +1,77 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import "./quests.css";
 
 /**MUI links */
-
-import AspectRatio from "@mui/joy/AspectRatio";
-import Card from "@mui/joy/Card";
-import CardContent from "@mui/joy/CardContent";
+import { duration, styled } from "@mui/material/styles";
+import Card from "@mui/material/Card";
 import CardOverflow from "@mui/joy/CardOverflow";
-import Divider from "@mui/joy/Divider";
-import Typography from "@mui/joy/Typography";
-import IconButton from "@mui/joy/IconButton";
-import Link from "@mui/joy/Link";
+import AspectRatio from "@mui/joy/AspectRatio";
 import Favorite from "@mui/icons-material/Favorite";
+import { Link } from "react-router-dom";
+import Divider from "@mui/joy/Divider";
+import CardHeader from "@mui/material/CardHeader";
+import CardMedia from "@mui/material/CardMedia";
+import CardContent from "@mui/material/CardContent";
+import CardActions from "@mui/material/CardActions";
+import Collapse from "@mui/material/Collapse";
+import Avatar from "@mui/material/Avatar";
+import IconButton from "@mui/material/IconButton";
+import Typography from "@mui/material/Typography";
+import { red } from "@mui/material/colors";
+import FavoriteIcon from "@mui/icons-material/Favorite";
+import ShareIcon from "@mui/icons-material/Share";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import { Button } from "@mui/material";
+import { fetchLocations, urlFor } from "../../client";
 
-/**data map variables */
-function createData(name, calories, fat, carbs, protein) {
-  return { name, calories, fat, carbs, protein };
-}
+/**I want the cards to have a modal popup instead of the Expand more it needs to be replaced */
+const ExpandMore = styled((props) => {
+  const { expand, ...other } = props;
+  return <IconButton {...other} />;
+})(({ theme, expand }) => ({
+  transform: !expand ? "rotate(0deg)" : "rotate(180deg)",
+  marginLeft: "auto",
+  transition: theme.transitions.create("transform", {
+    duration: theme.transitions.duration.shortest,
+  }),
+}));
 
+/**function to fetch locations from Sanity */
 const Quests = () => {
+  const [locations, setLocations] = useState([]);
+
+  useEffect(() => {
+    const getLocations = async () => {
+      const data = await fetchLocations();
+      setLocations(data);
+    };
+    getLocations();
+  }, []);
+
   return (
     <div>
-      Blog
-      <Card variant="outlined" sx={{ width: 320 }}>
-        <CardOverflow>
-          <AspectRatio ratio="2">
-            <img
-              src="https://images.unsplash.com/photo-1532614338840-ab30cf10ed36?auto=format&fit=crop&w=318"
-              srcSet="https://images.unsplash.com/photo-1532614338840-ab30cf10ed36?auto=format&fit=crop&w=318&dpr=2 2x"
-              loading="lazy"
-              alt=""
-            />
-          </AspectRatio>
-          <IconButton
-            aria-label="Like minimal photography"
-            size="md"
-            variant="solid"
-            color="danger"
-            sx={{
-              position: "absolute",
-              zIndex: 2,
-              borderRadius: "50%",
-              right: "1rem",
-              bottom: 0,
-              transform: "translateY(50%)",
-            }}
-          >
-            <Favorite />
-          </IconButton>
-        </CardOverflow>
-        <CardContent>
-          <Typography level="title-md">
-            <Link href="#multiple-actions" overlay underline="none">
-              Yosemite National Park
-            </Link>
-          </Typography>
-          <Typography level="body-sm">
-            <Link href="#multiple-actions">California</Link>
-          </Typography>
-        </CardContent>
-        <CardOverflow variant="soft">
-          <Divider inset="context" />
-          <CardContent orientation="horizontal">
-            <Typography level="body-xs">6.3k views</Typography>
-            <Divider orientation="vertical" />
-            <Typography level="body-xs">1 hour ago</Typography>
+      <h2 className="fw-bold display-2">Title for page goes here</h2>
+      {locations.map((location) => (
+        <Card key={location._id} sx={{ width: 345, marginBottom: 2 }}>
+          <CardHeader title={location.title} subheader={location.Location} />
+          <CardMedia
+            component="img"
+            sx={{ height: 250 }}
+            image={urlFor(location.Image).url()}
+            alt={location.Title}
+          />
+          <CardContent>
+            <Typography variant="body2" color="text.secondary">
+              {location.Description}
+            </Typography>
           </CardContent>
-        </CardOverflow>
-      </Card>
+          <CardActions>
+            <Button size="small">Check in to solve</Button>
+            <Button size="small">Hint</Button>
+          </CardActions>
+        </Card>
+      ))}
     </div>
   );
 };
