@@ -23,7 +23,9 @@ const StyledDiv = styled("div")(({ theme }) => ({
 const HowItWorks = () => {
   return (
     <div style={{ padding: "20px" }}>
-      <h1 class="text-4xl font-bold text-center text-gray-800 mt-8"></h1>
+      <h1 class="text-4xl font-bold text-center text-gray-800 mt-8">
+        Find out how to take on quests
+      </h1>
       <p class="text-center text-lg text-gray-600 mt-4">more info</p>
 
       {/**FAQ card for heading  */}
