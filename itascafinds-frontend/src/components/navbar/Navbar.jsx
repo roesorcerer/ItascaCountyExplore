@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import "./navbar.css";
-import { RiMenu3Line, RiCloseLine } from "react-icons/ri";
-import logo from "../../assets/IQ_logo.png";
 
 /*mui imports*/
 import AppBar from "@mui/material/AppBar";

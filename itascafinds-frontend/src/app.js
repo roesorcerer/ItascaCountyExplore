@@ -12,7 +12,7 @@ import {
   SuggestLocation,
 } from "./container"; //container imports from index.js
 
-import { CTA, Updates, Navbar } from "./components"; //import of components from index.js
+import { CTA, Updates } from "./components"; //import of components from index.js
 
 import Login from "./components/Login";
 import Layout from "./container/Layout"; // Adjust path if needed

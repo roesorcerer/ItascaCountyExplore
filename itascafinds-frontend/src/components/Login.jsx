@@ -1,26 +1,26 @@
-import React from 'react';
-import { GoogleLogin } from '@react-oauth/google';
-import { useNavigate } from 'react-router-dom';
-import { FcGoogle } from 'react-icons/fc';
-import shareVideo from '../assets/share.mp4';
-import logo from '../assets/logowhite.png';
-import { client } from '../client';
+import React from "react";
+import { GoogleLogin } from "@react-oauth/google";
+import { useNavigate } from "react-router-dom";
+import { FcGoogle } from "react-icons/fc";
+import shareVideo from "../assets/share.mp4";
+import logo from "../assets/logowhite.png";
+import { client } from "../client";
 
 const Login = () => {
   const navigate = useNavigate();
 
   const responseGoogle = (response) => {
-    console.log('Google response:', response);
-    localStorage.setItem('user', JSON.stringify(response.profileObj));
+    console.log("Google response:", response);
+    localStorage.setItem("user", JSON.stringify(response.profileObj));
     const { name, googleId, imageUrl } = response.profileObj;
     const doc = {
       _id: googleId,
-      _type: 'user',
+      _type: "user",
       userName: name,
       image: imageUrl,
     };
     client.createIfNotExists(doc).then(() => {
-      navigate('/', { replace: true });
+      navigate("/", { replace: true });
     });
   };
 
@@ -39,7 +39,7 @@ const Login = () => {
 
         <div className="absolute flex flex-col justify-center items-center top-0 right-0 left-0 bottom-0    bg-blackOverlay">
           <div className="p-5">
-            <img src={logo} width="130px" />
+            <img src={logo} width="130px" alt="logo" />
           </div>
 
           <div className="shadow-2xl">
