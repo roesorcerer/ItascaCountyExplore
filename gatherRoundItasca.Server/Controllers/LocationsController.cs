@@ -18,9 +18,7 @@ namespace gatherRoundItasca.Server.Controllers
         {
             _locations = collectionsService.Locations;
         }
-        // HTTP GET method to retrieve a collection of locations.
-        // The method is asynchronous to allow non-blocking calls and database operations.
-        [HttpGet]
+    [HttpGet]
         public async Task<ActionResult<IEnumerable<LocationModel>>> Get()
         {
             try
@@ -31,13 +29,10 @@ namespace gatherRoundItasca.Server.Controllers
 
                 return Ok(locations);
             }
-
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Log the exception details here
-                return StatusCode(500, "An error occurred while retrieving locations.");
+                return StatusCode(500, new { error = "An error occurred while retrieving locations.", details = ex.Message });
             }
-  
         }
 
     }

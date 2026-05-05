@@ -58,7 +58,8 @@ namespace gatherRoundItasca.Server
                                       builder.WithOrigins(
                                                 "https://localhost:5173",
                                                 "http://localhost:5164",
-                                                "https://localhost:5165"
+                                                "https://localhost:5165",
+                                                "https://itascatrails.fly.dev"
                                              )
                                              .AllowAnyHeader()
                                              .AllowAnyMethod();
@@ -69,8 +70,11 @@ namespace gatherRoundItasca.Server
         }
 
 
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger)
         {
+            logger.LogInformation("ContentRootPath: {Path}", env.ContentRootPath);
+            logger.LogInformation("WebRootPath: {Path}", env.WebRootPath);
+
             using (var scope = app.ApplicationServices.CreateScope())
             {
                 var services = scope.ServiceProvider;
@@ -78,23 +82,18 @@ namespace gatherRoundItasca.Server
                 {
                     var mongoSeedService = services.GetRequiredService<MongoSeedService>();
                     mongoSeedService.SeedAsync().GetAwaiter().GetResult();
+                    logger.LogInformation("Database seeding completed successfully.");
                 }
                 catch (Exception ex)
                 {
-                    // Log the error if something goes wrong
-                    var logger = services.GetRequiredService<ILogger<Startup>>();
                     logger.LogError(ex, "An error occurred seeding the DB.");
                 }
             }
-        
+
             if (env.IsDevelopment())
             {
-
                 app.UseDeveloperExceptionPage();
-                // Enable middleware to serve generated Swagger as a JSON endpoint
                 app.UseSwagger();
-
-                // Enable middleware to serve swagger-ui assets (HTML, JS, CSS)
                 app.UseSwaggerUI(c =>
                 {
                     c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
@@ -107,23 +106,21 @@ namespace gatherRoundItasca.Server
                 app.UseHsts();
             }
 
-            if (env.IsDevelopment())
+            if (!env.IsDevelopment())
             {
                 app.UseHttpsRedirection();
             }
-            app.UseStaticFiles(); // Serve static files
 
+            app.UseStaticFiles();
             app.UseCors("MyAllowSpecificOrigins");
             app.UseRouting();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapControllers(); // Map Controller routes
-                // Map fallback to root for SPA
+                endpoints.MapControllers();
                 endpoints.MapFallbackToFile("index.html");
             });
-
         }
 
     }
