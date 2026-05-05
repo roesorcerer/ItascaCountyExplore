@@ -1,7 +1,7 @@
 ﻿using gatherRoundItasca.Server.Models;
 using gatherRoundItasca.Server.Services;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using MongoDB.Driver;
 
 namespace gatherRoundItasca.Server.Controllers
 {
@@ -11,11 +11,11 @@ namespace gatherRoundItasca.Server.Controllers
     [Route("api/[controller]")]
     public class UpdatesController : ControllerBase
     {
-        private readonly UpdatesDataService _updatesDataService;
+        private readonly IMongoCollection<UpdateModel> _updates;
 
-        public UpdatesController(UpdatesDataService updatesDataService)
+        public UpdatesController(MongoCollectionsService collectionsService)
         {
-            _updatesDataService = updatesDataService;
+            _updates = collectionsService.Updates;
         }
         // HTTP GET method to retrieve a collection of updates.
         // The method is asynchronous to allow non-blocking calls and database operations.
@@ -24,14 +24,17 @@ namespace gatherRoundItasca.Server.Controllers
         {
             try
             {
-                var updates = await _updatesDataService.GetUpdatesAsync();
+                var updates = await _updates.Find(Builders<UpdateModel>.Filter.Empty)
+                    .SortBy(x => x.UpdateNumber)
+                    .ToListAsync();
+
                 if (updates == null || !updates.Any())
                 {
                     return NotFound("Updates not found.");
                 }
                 return Ok(updates);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Log the exception details here
                 return StatusCode(500, "An error occurred while retrieving updates.");

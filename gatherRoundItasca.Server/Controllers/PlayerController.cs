@@ -1,11 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System.Net.Http.Json;
-using System.Text.Json.Serialization;
-using System.Xml;
-using Newtonsoft.Json;
-using Formatting = Newtonsoft.Json.Formatting;
 using gatherRoundItasca.Server.Services;
 using gatherRoundItasca.Server.Models;
+using MongoDB.Driver;
 namespace gatherRoundItasca.Server.Controllers;
 
 //Lots of excess here between the PlayerRegistration and the playerDataModel. Need to clean up the code and make it more efficient.
@@ -15,102 +11,111 @@ namespace gatherRoundItasca.Server.Controllers;
 public class PlayerController : ControllerBase
 {
     private readonly EmailService _emailService;
-    private readonly string _jsonFilePath = @"Data\playerData.json";
+    private readonly IMongoCollection<PlayerDataModel> _players;
+    private readonly ILogger<PlayerController> _logger;
 
-    public PlayerController(EmailService emailService)
+    public PlayerController(EmailService emailService, MongoCollectionsService collectionsService, ILogger<PlayerController> logger)
     {
         _emailService = emailService;
+        _players = collectionsService.Players;
+        _logger = logger;
     }
 
     [HttpPost]
     [Route("register")]
-    public async Task<IActionResult> RegisterPlayer([FromBody] PlayerRegistration registration)
+    public async Task<IActionResult> RegisterPlayer([FromBody] PlayerDataModel registration)
     {
-        // Code to save registration details to JSON file
-        var jsonData = System.IO.File.ReadAllText(_jsonFilePath);
-        var playerList = JsonConvert.DeserializeObject<List<PlayerRegistration>>(jsonData) ?? new List<PlayerRegistration>();
-        playerList.Add(new PlayerRegistration
+        if (string.IsNullOrWhiteSpace(registration.PlayerId))
         {
-            Email = registration.Email,
-            FavoriteColor = registration.FavoriteColor,
-            FavoriteFood = registration.FavoriteFood,
-            FavoriteAnimal = registration.FavoriteAnimal,
-            PlayerId = registration.PlayerId, // Use the PlayerId from the frontend
-            Points = 0 // Initialize points to 0
-        });
-        System.IO.File.WriteAllText(_jsonFilePath, JsonConvert.SerializeObject(playerList, Formatting.Indented));
+            return BadRequest(new { Message = "PlayerId is required." });
+        }
+
+        var existingPlayer = await _players.Find(x => x.PlayerId == registration.PlayerId).FirstOrDefaultAsync();
+        if (existingPlayer != null)
+        {
+            return Conflict(new { Message = "PlayerId already exists." });
+        }
+
+        registration.Points = 0;
+        await _players.InsertOneAsync(registration);
 
         // Code to send email
-        await _emailService.SendEmailAsync(registration.Email, "Your Player ID", $"Your unique player ID is: {registration.PlayerId}");
+        if (!string.IsNullOrWhiteSpace(registration.Email))
+        {
+            try
+            {
+                await _emailService.SendEmailAsync(registration.Email, "Your Player ID", $"Your unique player ID is: {registration.PlayerId}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to send registration email for PlayerId {PlayerId}", registration.PlayerId);
+            }
+        }
 
-        return Ok(new { PlayerId = registration.PlayerId });
+        return Ok(new { playerId = registration.PlayerId });
     }
 
     [HttpGet("retrieveID")]
-    public IActionResult RetrievePlayerId([FromQuery] string playerID)
+    public async Task<IActionResult> RetrievePlayerId([FromQuery] string playerID)
     {
-        Console.WriteLine($"Looking for playerID: {playerID}");
-        var jsonData = System.IO.File.ReadAllText(_jsonFilePath);
-        var playerList = JsonConvert.DeserializeObject<List<PlayerRegistration>>(jsonData) ?? new List<PlayerRegistration>();
-        Console.WriteLine($"Loaded {playerList.Count} players");
+        if (string.IsNullOrWhiteSpace(playerID))
+        {
+            return BadRequest(new { Message = "playerID is required." });
+        }
 
-        // Find the player with the given playerID
-        var player = playerList.FirstOrDefault(p => string.Equals(p.PlayerId, playerID, StringComparison.OrdinalIgnoreCase));
+        var player = await _players.Find(x => x.PlayerId == playerID).FirstOrDefaultAsync();
         if (player == null)
         {
-            Console.WriteLine("Player not found");
             return NotFound(new { Message = "Player not found" });
         }
-        Console.WriteLine($"Found player ID: {player.PlayerId}");
-        return Ok(new { PlayerId = player.PlayerId });
+
+        return Ok(new { playerId = player.PlayerId });
     }
 
 
 
     [HttpGet("retrieveByEmail")]
-    public IActionResult PlayerEmailRetrival([FromQuery] string email)
+    public async Task<IActionResult> PlayerEmailRetrival([FromQuery] string email)
     {
-        Console.WriteLine($"Looking for email: {email}");
-        var jsonData = System.IO.File.ReadAllText(_jsonFilePath);
-        var playerList = JsonConvert.DeserializeObject<List<PlayerRegistration>>(jsonData) ?? new List<PlayerRegistration>();
-        Console.WriteLine($"Loaded {playerList.Count} players");
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return BadRequest(new { Message = "email is required." });
+        }
 
-        // Find the player with the given email
-        var player = playerList.FirstOrDefault(p => string.Equals(p.Email, email, StringComparison.OrdinalIgnoreCase));
+        var player = await _players.Find(x => x.Email == email).FirstOrDefaultAsync();
         if (player == null)
         {
-            Console.WriteLine("Player not found");
             return NotFound(new { Message = "Player not found" });
         }
-        Console.WriteLine($"Found player ID: {player.PlayerId}");
-        return Ok(new { PlayerId = player.PlayerId });
+
+        return Ok(new { playerId = player.PlayerId });
     }
 
     [HttpPatch("updateScore")]
-public async Task AddPointsAsync(string playerId, int pointsToAdd)
+    public async Task<IActionResult> AddPointsAsync([FromQuery] string playerId, [FromQuery] int pointsToAdd)
     {
-        var jsonData = await System.IO.File.ReadAllTextAsync(_jsonFilePath);
-        var playerList = JsonConvert.DeserializeObject<List<PlayerRegistration>>(jsonData) ?? new List<PlayerRegistration>();
-
-        var player = playerList.FirstOrDefault(p => p.PlayerId == playerId);
-        if (player != null)
+        if (string.IsNullOrWhiteSpace(playerId))
         {
-            player.Points += pointsToAdd; // Directly add points here
-
-            var updatedJsonData = JsonConvert.SerializeObject(playerList, Formatting.Indented);
-            await System.IO.File.WriteAllTextAsync(_jsonFilePath, updatedJsonData);
+            return BadRequest(new { Message = "playerId is required." });
         }
+
+        var updateResult = await _players.UpdateOneAsync(
+            x => x.PlayerId == playerId,
+            Builders<PlayerDataModel>.Update.Inc(x => x.Points, pointsToAdd));
+
+        if (updateResult.MatchedCount == 0)
+        {
+            return NotFound(new { Message = "Player not found" });
+        }
+
+        return Ok(new { Message = "Score updated" });
     }
 
-}
-public class PlayerRegistration
-{
-    public string? Email { get; set; }
-    public string? FavoriteColor { get; set; }
-    public string? FavoriteFood { get; set; }
-    public string? FavoriteAnimal { get; set; }
-    public string? PlayerId { get; set; }
+    [HttpGet("retrieve")]
+    public Task<IActionResult> RetrieveByEmailAlias([FromQuery] string email)
+    {
+        return PlayerEmailRetrival(email);
+    }
 
-    public int Points { get; set; } //non nullable initialization set to 0
 }
 

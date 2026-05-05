@@ -1,5 +1,5 @@
 import "../assets/css/BackendStyle.css";
-import { useState } from 'react';
+import { FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const LoginPage = () => {
@@ -11,12 +11,13 @@ const LoginPage = () => {
     const hardcodedUsername = 'adminUser';
     const hardcodedPassword = 'adminPass';
 
-    const handleLogin = (e: { preventDefault: () => void; }) => {
+    const handleLogin = (e: FormEvent) => {
         e.preventDefault();
         // Here you would handle authentication.
         // This example just redirects to the admin page if the username and password are filled.
         if (username === hardcodedUsername && password === hardcodedPassword) {
             console.log('Login Successful');
+            sessionStorage.setItem('adminAuthenticated', 'true');
             navigate('/admin'); // Redirect to admin page upon successful login // Redirect to admin page upon successful login
         } else {
             console.log('Login Failed: Username or password missing');

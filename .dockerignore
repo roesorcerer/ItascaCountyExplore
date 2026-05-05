@@ -1,0 +1,14 @@
+bin
+obj
+dist
+node_modules
+.git
+.gitignore
+README.md
+.env
+.env.local
+.env.*.local
+*.log
+.vs
+.vscode
+*.user

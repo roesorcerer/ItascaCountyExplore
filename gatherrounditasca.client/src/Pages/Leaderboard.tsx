@@ -5,16 +5,13 @@ import Footer from '../LayoutAssets/Footer';
 //create interface for leaderboard so I can set the state
 interface Leaderboard {
     playerId: string;
-    ranking: string;
+    ranking: number;
     locationsVisited: number;
 
 }
 
 const Leaderboard: React.FC = () => {
     //set the state for the leaderboard
-    const [playerId, setPlayerId] = React.useState('');
-    const [ranking, setRanking] = React.useState('');
-    const [locationsVisited, setLocationsVisited] = React.useState(0);
     const [leaderboard, setLeaderboard] = React.useState<Leaderboard[]>([]);
 
 React.useEffect(() => {
@@ -57,18 +54,12 @@ React.useEffect(() => {
                                         </tr>
                                     </thead>
                                     <tbody className="table-group-divider">
-                                        <tr>
-                                            <th scope="row">1</th>
-                                            <td>Mark</td>
-                                        </tr>
-                                        <tr>
-                                            <th scope="row">2</th>
-                                            <td>Jacob</td>
-                                        </tr>
-                                        <tr>
-                                            <th scope="row">3</th>
-                                            <td colSpan={2}>Larry the Bird</td>
-                                        </tr>
+                                        {leaderboard.map((entry) => (
+                                            <tr key={entry.playerId}>
+                                                <th scope="row">{entry.playerId}</th>
+                                                <td>{entry.locationsVisited}</td>
+                                            </tr>
+                                        ))}
                                     </tbody>
                                 </table>
                             </div>

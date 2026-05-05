@@ -5,7 +5,6 @@ import 'bootstrap/dist/css/bootstrap.min.css'
 import './assets/css/index.css'
 import './assets/css/StyleSheet.css'
 import 'react-toastify/dist/ReactToastify.css';
-import 'react-toastify/dist/ReactToastify.min.css';
 
 
 

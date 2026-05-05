@@ -1,13 +1,17 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
 using System.Text.Json;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 
 namespace gatherRoundItasca.Server.Models
 {
+    [BsonIgnoreExtraElements]
     public class UpdateModel
     {
         //ID reference for the update
         [Key]
+        [BsonId]
+        [BsonRepresentation(BsonType.Int32)]
         public int UpdateNumber { get; set; }
         //date the update was made
         [Required]

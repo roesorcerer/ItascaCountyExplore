@@ -1,11 +1,7 @@
-﻿using gatherRoundItasca.Server.Data;
-using gatherRoundItasca.Server.Models;
+﻿using gatherRoundItasca.Server.Models;
 using gatherRoundItasca.Server.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using MongoDB.Driver;
 
 
 namespace gatherRoundItasca.Server.Controllers
@@ -16,11 +12,11 @@ namespace gatherRoundItasca.Server.Controllers
     [Route("api/[controller]")]
     public class LocationsController : ControllerBase
     {
-        private readonly ExploreItascaContext _context;
-        // Constructor injecting the JsonFileAnimesService into the controller.
-        public LocationsController(ExploreItascaContext context)
+        private readonly IMongoCollection<LocationModel> _locations;
+
+        public LocationsController(MongoCollectionsService collectionsService)
         {
-            _context = context;
+            _locations = collectionsService.Locations;
         }
         // HTTP GET method to retrieve a collection of locations.
         // The method is asynchronous to allow non-blocking calls and database operations.
@@ -29,11 +25,14 @@ namespace gatherRoundItasca.Server.Controllers
         {
             try
             {
-                var locations = await _context.Location.ToListAsync();
+                var locations = await _locations.Find(Builders<LocationModel>.Filter.Empty)
+                    .SortBy(x => x.Id)
+                    .ToListAsync();
+
                 return Ok(locations);
             }
 
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Log the exception details here
                 return StatusCode(500, "An error occurred while retrieving locations.");

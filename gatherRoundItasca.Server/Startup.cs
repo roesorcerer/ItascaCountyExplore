@@ -1,16 +1,11 @@
-﻿using Azure.Identity;
-using Azure.Security.KeyVault.Secrets;
-using gatherRoundItasca.Server.Data;
-using gatherRoundItasca.Server.Models;
-using gatherRoundItasca.Server.Services;
+﻿using gatherRoundItasca.Server.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
-using System.Text.Json;
+using MongoDB.Driver;
 
 namespace gatherRoundItasca.Server
 {
@@ -25,28 +20,24 @@ namespace gatherRoundItasca.Server
 
         public void ConfigureServices(IServiceCollection services)
         {
-            //Azure Key Vault configuration
-            var keyVaultUri = Configuration["AzureKeyVault:Uri"];
-            if (!string.IsNullOrEmpty(keyVaultUri))
-            {
-                var secretClient = new SecretClient(new Uri(keyVaultUri), new DefaultAzureCredential());
+            var mongoConnectionString = Configuration["MongoDb:ConnectionString"] ?? Configuration.GetConnectionString("MongoDb");
+            var mongoDatabaseName = Configuration["MongoDb:DatabaseName"] ?? "itascatrails";
 
-                //Retrive the database connection string from the key vault
-                var connectionStringSecret = secretClient.GetSecret("ExploreDatabaseConnectionString");
-                var connectionString = connectionStringSecret.Value.Value;
-
-                //configure DB file with SQL Server using the connection string
-                services.AddDbContext<ExploreItascaContext>(options =>
-                    options.UseSqlServer(connectionString), ServiceLifetime.Scoped);
-            }
-            else
+            if (string.IsNullOrWhiteSpace(mongoConnectionString))
             {
-                //Fallback to local configuration if the key vault is not configured
-                services.AddDbContext<ExploreItascaContext>(options =>
-                    options.UseSqlServer(Configuration.GetConnectionString("ExploreItascaContext")), ServiceLifetime.Scoped);
+                throw new InvalidOperationException("MongoDB connection string is missing. Set MongoDb:ConnectionString in appsettings or user secrets.");
             }
 
+            if (mongoConnectionString.Contains("<db_password>", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("MongoDB connection string still contains <db_password>. Replace it with your real database password.");
+            }
 
+            services.AddSingleton<IMongoClient>(_ => new MongoClient(mongoConnectionString));
+            services.AddSingleton(sp =>
+                sp.GetRequiredService<IMongoClient>().GetDatabase(mongoDatabaseName));
+            services.AddSingleton<MongoCollectionsService>();
+            services.AddScoped<MongoSeedService>();
 
             // Add MVC controllers to the service collection
             services.AddControllers();
@@ -56,9 +47,6 @@ namespace gatherRoundItasca.Server
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
             });
-            // Add DataFileService to the service collection
-            services.AddScoped<UpdatesDataService>();
-
             // Add EmailService and EmailSettings to the service collection
             services.Configure<EmailSettings>(Configuration.GetSection("EmailSettings"));
             services.AddTransient<EmailService>();
@@ -84,10 +72,8 @@ namespace gatherRoundItasca.Server
                 var services = scope.ServiceProvider;
                 try
                 {
-                    var context = services.GetRequiredService<ExploreItascaContext>();
-                    context.Database.EnsureCreated(); // Make sure the database is created
-                    var pathToJson = "/data/bestitascalocations.json"; // Update this path
-                    ExploreItascaContext.SeedFromJson(context, pathToJson);
+                    var mongoSeedService = services.GetRequiredService<MongoSeedService>();
+                    mongoSeedService.SeedAsync().GetAwaiter().GetResult();
                 }
                 catch (Exception ex)
                 {
@@ -117,7 +103,10 @@ namespace gatherRoundItasca.Server
                 app.UseHsts();
             }
 
-            app.UseHttpsRedirection();
+            if (env.IsDevelopment())
+            {
+                app.UseHttpsRedirection();
+            }
             app.UseStaticFiles(); // Serve static files
 
             app.UseRouting();

@@ -1,14 +1,17 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
-using System.Text.Json;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 
 namespace gatherRoundItasca.Server.Models
 {
     //Model for the player data
+    [BsonIgnoreExtraElements]
     public class PlayerDataModel
     {
         //PlayerID for the player with the get and set methods
         [Key]
+        [BsonId]
+        [BsonRepresentation(BsonType.String)]
         public string? PlayerId { get; set; }
         //Email for the player with the get and set methods
         [Required]
@@ -30,13 +33,6 @@ namespace gatherRoundItasca.Server.Models
         //Points the player has accumulated with the get and set methods
         [Required]
         public int Points { get; set; }
-
-        //Points the player has accumulated with the get and set methods
-        [Required]
-        public List<LeaderboardModel> Place { get; set; } = new List<LeaderboardModel>();
-
-        //Json serializer to serialize the location model
-        //public override string ToString() => JsonSerializer.Serialize(this);
     }
 }
 

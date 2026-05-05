@@ -1,14 +1,16 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Xml.Linq;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 
 namespace gatherRoundItasca.Server.Models
 {
+    [BsonIgnoreExtraElements]
     public class LocationModel
     {
         //ID reference for the location
         [Key]
+        [BsonId]
+        [BsonRepresentation(BsonType.Int32)]
         public int Id { get; set; }
         //date that the phto was taken at the location
         [Required]
@@ -35,6 +37,9 @@ namespace gatherRoundItasca.Server.Models
         //riddle of the location
         [Required]
         public string? Riddle { get; set; }
+
+        // Tracks how often a trail/location is visited for admin analytics.
+        public int VisitCount { get; set; } = 0;
 
         //Json serializer to serialize the location model
        // public override string ToString() => JsonSerializer.Serialize<LocationModel>(this);
