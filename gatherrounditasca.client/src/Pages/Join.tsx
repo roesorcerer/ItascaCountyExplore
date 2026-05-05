@@ -1,178 +1,362 @@
-import React, { useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import Header from '../LayoutAssets/Header';
 import Footer from '../LayoutAssets/Footer';
+import { Button, Modal, SectionHead } from '../components';
+import { useModal } from '../hooks';
+import { useForm } from '../hooks/useForm';
+import { generatePlayerId, copyToClipboard } from '../utils';
+import { API_ENDPOINTS, MESSAGES, FORM_OPTIONS } from '../constants';
+import { toast } from 'react-toastify';
 
-// Sample data for dropdowns
-const colors = ["Red", "Blue", "Green", "Yellow", "Purple", "Orange", "Black", "White", "Pink", "Grey"];
-const foods = ["Pizza", "Sushi", "Pasta", "Burger", "Salad", "Steak", "Tacos", "Curry", "Ice Cream", "Chocolate"];
-const animals = ["Dog", "Cat", "Bird", "Fish", "Lion", "Tiger", "Bear", "Elephant", "Wolf", "Fox"];
+// Icons
+const CopyIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M16 4h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+        <rect x="8" y="2" width="8" height="4" rx="1" />
+    </svg>
+);
 
-/*interface Player {
-        updateNumber: number;
-        date: string;
-        locationUpdate: string;
-        leaderboardUpdate: string;
-}*/
+const CheckIcon = () => (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+    </svg>
+);
 
+// Form field component
+interface FormFieldProps {
+  label: string;
+  type?: 'email' | 'text' | 'select';
+  value: string;
+  onChange: (value: string) => void;
+  error?: string;
+  options?: string[];
+  placeholder?: string;
+  disabled?: boolean;
+}
+
+const FormField: React.FC<FormFieldProps> = ({
+  label,
+  type = 'text',
+  value,
+  onChange,
+  error,
+  options,
+  placeholder,
+  disabled,
+}) => (
+  <div>
+    <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.5rem', fontSize: '0.95rem' }}>
+      {label}
+    </label>
+    {type === 'select' && options ? (
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        style={{
+          width: '100%',
+          padding: '0.85rem 1rem',
+          borderRadius: 'var(--it-radius)',
+          border: `1.5px solid ${error ? '#e74c3c' : 'var(--it-border)'}`,
+          background: 'var(--it-bg-elev)',
+          color: 'var(--it-text)',
+          fontSize: '0.95rem',
+          boxSizing: 'border-box',
+        }}
+      >
+        <option value="">— Select —</option>
+        {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+      </select>
+    ) : (
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        disabled={disabled}
+        style={{
+          width: '100%',
+          padding: '0.85rem 1rem',
+          borderRadius: 'var(--it-radius)',
+          border: `1.5px solid ${error ? '#e74c3c' : 'var(--it-border)'}`,
+          background: 'var(--it-bg-elev)',
+          color: 'var(--it-text)',
+          fontSize: '0.95rem',
+          boxSizing: 'border-box',
+        }}
+      />
+    )}
+    {error && <p style={{ fontSize: '0.8rem', color: '#e74c3c', margin: '0.5rem 0 0' }}>{error}</p>}
+  </div>
+);
+
+// Retrieve section component
+interface RetrieveSectionProps {
+  onRetrieve: (email: string) => Promise<void>;
+  loading: boolean;
+}
+
+const RetrieveSection: React.FC<RetrieveSectionProps> = ({ onRetrieve, loading }) => {
+  const [email, setEmail] = React.useState('');
+
+  const handleRetrieve = useCallback(async () => {
+    if (!email) {
+      toast.error('Enter your email');
+      return;
+    }
+    await onRetrieve(email);
+  }, [email, onRetrieve]);
+
+  return (
+    <div style={{
+      padding: '1.5rem',
+      borderRadius: 'var(--it-radius-lg)',
+      background: 'var(--it-bg-elev)',
+      border: '1.5px solid var(--it-border)',
+    }}>
+      <p style={{ fontWeight: 600, marginBottom: '1rem', fontSize: '0.95rem' }}>Retrieve your ID</p>
+      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <input
+          type="email"
+          placeholder="Enter your email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          disabled={loading}
+          style={{
+            flex: 1,
+            minWidth: '200px',
+            padding: '0.85rem 1rem',
+            borderRadius: 'var(--it-radius)',
+            border: '1.5px solid var(--it-border)',
+            background: 'var(--it-bg)',
+            color: 'var(--it-text)',
+            fontSize: '0.95rem',
+            boxSizing: 'border-box',
+          }}
+        />
+        <Button variant="ghost" onClick={handleRetrieve} loading={loading}>
+          Find it
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+// Main Join page
 const Join: React.FC = () => {
-    const [email, setEmail] = useState('');
-    const [favoriteColor, setFavoriteColor] = useState('');
-    const [favoriteFood, setFavoriteFood] = useState('');
-    const [favoriteAnimal, setFavoriteAnimal] = useState('');
-    const [playerId, setPlayerId] = useState('');
-    const [showModal, setShowModal] = useState(false);
-   // const [updates, setUpdates] = useState<Player[]>([]);
+  const { isOpen, open, close } = useModal();
+  const [copied, setCopied] = React.useState(false);
+  const [retrieveLoading, setRetrieveLoading] = React.useState(false);
 
-    const [errorMessage, setErrorMessage] = useState('');
-
-    const handleSubmit = async (e: { preventDefault: () => void; }) => {
-        e.preventDefault();
-
-        // Check if all fields are filled
-        if (!email || !favoriteColor || !favoriteFood || !favoriteAnimal) {
-            setErrorMessage('Please complete all fields.');
-            return;
-        }
-
-        setErrorMessage(''); // Clear error message on successful validation
-        // Ensure generateId has already been called and playerId is set
-        generateId();
-    };
-
-    const generateId = async () => {
-        const randomNum = Math.floor(1000 + Math.random() * 9000); // Keep this line
-        const id = `${favoriteColor[0]}${favoriteFood[0]}${favoriteAnimal[0]}${randomNum}`;
-        const playerId = id.toUpperCase();
-        setPlayerId(playerId); // Set the playerId state
-        setShowModal(true); // Show modal with Player ID
-
-        // Send data to backend after generating player ID
-        const data = { email, favoriteColor, favoriteFood, favoriteAnimal, playerId }; // This already includes playerId
-
-        const response = await fetch('/api/player/register', { // Make sure the URL is correct
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data),
+  const form = useForm(
+    { email: '', color: '', food: '', animal: '' },
+    {
+      onSubmit: async (values) => {
+        // Register player
+        const playerId = generatePlayerId(values.color, values.food, values.animal);
+        const response = await fetch(API_ENDPOINTS.PLAYER_REGISTER, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: values.email,
+            favoriteColor: values.color,
+            favoriteFood: values.food,
+            favoriteAnimal: values.animal,
+            playerId,
+          }),
         });
+        if (!response.ok) throw new Error('Registration failed');
+        form.values.playerId = playerId;
+        open();
+      },
+      onError: (err) => toast.error('Failed to register'),
+    }
+  );
 
-        if (!response.ok) {
-            // Handle error
-            console.error("Failed to register player");
-        }
-    };
+  const previewId = useMemo(
+    () => form.values.color && form.values.food && form.values.animal
+      ? generatePlayerId(form.values.color, form.values.food, form.values.animal)
+      : '??????',
+    [form.values]
+  );
 
-    // Added logic for "Retrieve ID" button
-    const retrieveId = async () => {
-        try {
-            const response = await fetch(`/api/player/retrieve?email=${encodeURIComponent(email)}`, {
-                method: 'GET',
-                headers: { 'Accept': 'application/json' },
-            });
+  const validateForm = useCallback(() => {
+    if (!form.values.email || !form.values.color || !form.values.food || !form.values.animal) {
+      toast.error(MESSAGES.ERROR.REQUIRED_FIELD);
+      return false;
+    }
+    return true;
+  }, [form.values]);
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
-            if (data && data.PlayerId) {
-                setPlayerId(data.PlayerId);
-                setShowModal(true); // Show modal with Player ID
-            } else {
-                alert('No player ID found for the provided email.');
-            }
-        } catch (error) {
-            console.error("Failed to retrieve player ID:", error);
-            alert('Error retrieving player ID. Please try again.');
-        }
-    };
+  const handleRetrieve = useCallback(async (email: string) => {
+    setRetrieveLoading(true);
+    try {
+      const response = await fetch(`${API_ENDPOINTS.PLAYER_RETRIEVE}?email=${encodeURIComponent(email)}`);
+      if (!response.ok) throw new Error('Not found');
+      const data = await response.json();
+      if (data?.PlayerId) {
+        form.values.playerId = data.PlayerId;
+        open();
+        toast.success(MESSAGES.SUCCESS.PLAYER_FOUND);
+      }
+    } catch {
+      toast.error(MESSAGES.ERROR.PLAYER_NOT_FOUND);
+    } finally {
+      setRetrieveLoading(false);
+    }
+  }, [form, open]);
 
+  const handleCopy = useCallback(async () => {
+    if (await copyToClipboard(form.values.playerId || '')) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }, [form.values.playerId]);
 
+  return (
+    <>
+      <Header />
+      <main className="it-scope" style={{ minHeight: 'calc(100vh - 200px)' }}>
+        <section className="it-section" style={{ paddingTop: '3rem', paddingBottom: '4rem' }}>
+          <SectionHead
+            eyebrow="Get Started"
+            title="Create your Player ID"
+            subtitle="Three simple questions. Your answers create a memorable Player ID that only you'll have. Ready to join the hunt?"
+          />
 
+          <div style={{ maxWidth: '620px', margin: '0 auto' }}>
+            {/* Sign up form */}
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              form.handleSubmit(validateForm);
+            }} style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
 
-    return (
-        <>
-            <Header />
-            {/* Breadcrumb Navigation Links in Breadcrumb - Great idea!*/} 
-            <div className="breadcrumb-wrapper">
-                <div className="container-fluid">
-                    <nav aria-label="breadcrumb" role="navigation">
-                        <ol className="breadcrumb">
-                            <li className="breadcrumb-item"><a href="/">Home</a></li>
-                            <li className="breadcrumb-item active" aria-current="page">Join</li>
-                        </ol>
-                    </nav>
+              <FormField
+                label="Your email"
+                type="email"
+                value={form.values.email}
+                onChange={(val) => form.setFieldValue('email', val)}
+                placeholder="name@example.com"
+              />
+
+              <FormField
+                label="🎨 What's your favorite color?"
+                type="select"
+                value={form.values.color}
+                onChange={(val) => form.setFieldValue('color', val)}
+                options={FORM_OPTIONS.colors}
+              />
+
+              <FormField
+                label="🍽️ What's your favorite food?"
+                type="select"
+                value={form.values.food}
+                onChange={(val) => form.setFieldValue('food', val)}
+                options={FORM_OPTIONS.foods}
+              />
+
+              <FormField
+                label="🦌 What's your favorite animal?"
+                type="select"
+                value={form.values.animal}
+                onChange={(val) => form.setFieldValue('animal', val)}
+                options={FORM_OPTIONS.animals}
+              />
+
+              {/* Live preview */}
+              {form.values.color && form.values.food && form.values.animal && (
+                <div style={{
+                  padding: '1.5rem',
+                  borderRadius: 'var(--it-radius-lg)',
+                  background: 'var(--it-bg-muted)',
+                  border: '1.5px solid var(--it-primary)',
+                  textAlign: 'center',
+                }}>
+                  <p style={{ fontSize: '0.85rem', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--it-primary)', margin: '0 0 0.75rem' }}>
+                    Your Player ID will be
+                  </p>
+                  <div style={{
+                    fontFamily: 'monospace',
+                    fontSize: '1.85rem',
+                    fontWeight: 800,
+                    letterSpacing: '0.08em',
+                    color: 'var(--it-text)',
+                  }}>
+                    {previewId}
+                  </div>
                 </div>
-            </div>
-            <div className="container-fluid">
-                <div className="columns">
-                    <div className="column is-12">
-            <div className="has-text-centered">
-                        <h2 className="lg-title">Answer a few simple questions to play!</h2>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        <section className="pt-5 padding-bottom">
-                <h3>Join the adventure around some of the sights around Itasca County. Enter your email address to
-                    receive a unique player identification number to get started and watch yourself climb the ranks!</h3>
-                {errorMessage && <div className="alert alert-danger" role="alert">{errorMessage}</div>}
-</section>
-            <form onSubmit={handleSubmit}>
-                <div className="mb-3" style={{ maxWidth: '300px', margin: 'auto' }}>
-                    <label htmlFor="emailInput" className="form-label">Email address</label>
-                    <input type="email" className="form-control" id="emailInput" placeholder="name@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
-                </div>
-                {/* Dropdown for favorite color */}
-                <div className="mb-3" style={{ maxWidth: '300px', margin: 'auto' }}>
-                    <label htmlFor="favoriteColorSelect" className="form-label">What is your favorite color?</label>
-                    <select className="form-select" id="favoriteColorSelect" value={favoriteColor} onChange={(e) => setFavoriteColor(e.target.value)}>
-                            <option value="">Please select your favorite color</option>
-                            {colors.map(color => <option key={color} value={color}>{color}</option>)}
-                    </select>
-                </div>
-                {/* Dropdown for favorite food */}
-                <div className="mb-3" style={{ maxWidth: '300px', margin: 'auto' }}>
-                    <label htmlFor="favoriteFoodSelect" className="form-label">What is your favorite food?</label>
-                    <select className="form-select" id="favoriteFoodSelect" value={favoriteFood} onChange={(e) => setFavoriteFood(e.target.value)}>
-                            <option value="">Please select your favorite food</option>
-                            {foods.map(food => <option key={food} value={food}>{food}</option>)}
-                    </select>
-                </div>
-                {/* Dropdown for favorite animal */}
-                <div className="mb-3" style={{ maxWidth: '300px', margin: 'auto' }}>
-                    <label htmlFor="favoriteAnimalSelect" className="form-label">What is your favorite animal?</label>
-                    <select className="form-select" id="favoriteAnimalSelect" value={favoriteAnimal} onChange={(e) => setFavoriteAnimal(e.target.value)}>
-                            <option value="">Please select your favorite animal</option>
-                            {animals.map(animal => <option key={animal} value={animal}>{animal}</option>)}
-                    </select>
-                </div>
-                <button type="submit" className="btn btn-primary">Generate ID</button>
-                <button type="button" className="btn btn-secondary" onClick={retrieveId}>Retrieve ID</button>
+              )}
+
+              <Button variant="primary" type="submit" loading={form.loading} fullWidth>
+                Create my Player ID
+              </Button>
             </form>
-            {/* Modal for displaying Player ID */}
-            {showModal && (
-                <div className="modal" tabIndex={-1} style={{ display: 'block' }}>
-                    <div className="modal-dialog">
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <h5 className="modal-title">Your Player ID</h5>
-                                <button type="button" className="btn-close" onClick={() => setShowModal(false)}></button>
-                            </div>
-                            <div className="modal-body">
-                                <p>Your unique player ID is: <strong>{playerId}</strong></p>
-                            </div>
-                            <div className="modal-footer">
-                                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Close</button>
-                            </div>
-                        </div>
-                         </div>  
-                        </div>
-                
-                )}
-           
-          
-            <Footer />
-        </>
-    );
+
+            {/* Divider */}
+            <div style={{
+              margin: '2.5rem 0',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1rem',
+              color: 'var(--it-text-muted)',
+            }}>
+              <div style={{ flex: 1, height: '1px', background: 'var(--it-border)' }} />
+              <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Already have a Player ID?</span>
+              <div style={{ flex: 1, height: '1px', background: 'var(--it-border)' }} />
+            </div>
+
+            {/* Retrieve section */}
+            <RetrieveSection onRetrieve={handleRetrieve} loading={retrieveLoading} />
+          </div>
+        </section>
+      </main>
+
+      {/* Modal */}
+      <Modal isOpen={isOpen} onClose={close} title="🎉 You're in!">
+        <p style={{ color: 'var(--it-text-muted)', marginBottom: '1.75rem' }}>
+          Your Player ID is ready. Copy it and use it to log in and start playing.
+        </p>
+
+        <div style={{
+          padding: '1.5rem',
+          borderRadius: 'var(--it-radius)',
+          background: 'var(--it-bg-muted)',
+          border: '2px solid var(--it-primary)',
+          textAlign: 'center',
+          marginBottom: '1.75rem',
+        }}>
+          <p style={{ fontSize: '0.75rem', color: 'var(--it-text-muted)', margin: '0 0 0.5rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            Your Player ID
+          </p>
+          <div style={{
+            fontFamily: 'monospace',
+            fontSize: '1.75rem',
+            fontWeight: 900,
+            color: 'var(--it-text)',
+            letterSpacing: '0.12em',
+          }}>
+            {form.values.playerId}
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <Button
+            variant="accent"
+            fullWidth
+            onClick={handleCopy}
+            icon={copied ? <CheckIcon /> : <CopyIcon />}
+          >
+            {copied ? 'Copied!' : 'Copy to clipboard'}
+          </Button>
+          <a href="/play" className="it-btn it-btn-primary" style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+            Start playing →
+          </a>
+        </div>
+      </Modal>
+
+      <Footer />
+    </>
+  );
 };
 
 export default Join;

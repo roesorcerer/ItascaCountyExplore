@@ -21,7 +21,7 @@ const LatestUpdatesAccordion = () => {
     useEffect(() => {
         const fetchUpdates = async () => {
             try {
-                const response = await fetch('http://localhost:5164/api/updates');
+                const response = await fetch('/api/updates');
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const data = await response.json();
                 setUpdates(data);

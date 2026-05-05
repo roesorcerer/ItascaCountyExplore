@@ -1,45 +1,47 @@
-import { useNavigate } from 'react-router-dom';
-//import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from 'react-icons/fa';  You need to install react-icons for this to work
+import { Link, useNavigate } from 'react-router-dom';
 
 const Footer = () => {
     const navigate = useNavigate();
-
-    const handleLoginClick = () => {
-        // Logic to handle admin login, possibly show a login modal or redirect to a login page
-        console.log('Admin login clicked');
-        navigate('/login');
-    };
+    const year = new Date().getFullYear();
 
     return (
-        <section className="footer-2 section-padding gray-bg pb-5">
-            <div className="container footer-container">
-                {/* Widget at the top */}
-                <div className="widget footer-widget mb-6">
-                    <h3 className="widget-title">Remember to be respectful of the areas you visit.</h3>
-                    <p>So others can enjoy each site as much as you.</p>
-                </div>           
-                {/* Horizontal line for separation */}
-                <hr className="footer-divider" />
+        <footer className="it-footer it-scope">
+            <div className="it-footer__inner">
+                <div className="it-footer__about">
+                    <h5>Itasca Trails</h5>
+                    <p>
+                        A community scavenger hunt for Grand Rapids and the trails of Itasca County.
+                        Get out, explore, and learn what makes this corner of Minnesota special — and please leave each spot
+                        as beautiful as you found it.
+                    </p>
+                </div>
 
-                {/* Social and navigation links */}
-                <div className="footer-links">
-                    <ul className="list-inline footer-socials-2 has-text-centered mb-0">
-                        <li className="list-inline-item"><a href="/">Home</a></li>
-                        <li className="list-inline-item"><a href="/about">About</a></li>
-                        <li className="list-inline-item"><a href="/join">Join</a></li>
-                        <li className="list-inline-item"><a href="/play">Play</a></li>
+                <div>
+                    <h5>Play</h5>
+                    <ul>
+                        <li><Link to="/join">Get a Player ID</Link></li>
+                        <li><Link to="/play">Browse trails</Link></li>
+                        <li><Link to="/leaderboard">Leaderboard</Link></li>
                     </ul>
                 </div>
 
-                {/* Admin login link, hidden on the bottom right */}
-                <div className="admin-login" onClick={handleLoginClick}>
-                    <a href="#login" className="login-link">Admin</a>
+                <div>
+                    <h5>About</h5>
+                    <ul>
+                        <li><Link to="/about">How it works</Link></li>
+                        <li><Link to="/about">Trail etiquette</Link></li>
+                    </ul>
                 </div>
             </div>
-        </section>
-);
-               
+
+            <div className="it-footer__bottom">
+                <span>&copy; {year} Itasca Trails. Walk softly.</span>
+                <button type="button" className="it-footer__admin" onClick={() => navigate('/login')}>
+                    Admin
+                </button>
+            </div>
+        </footer>
+    );
 };
 
 export default Footer;
-

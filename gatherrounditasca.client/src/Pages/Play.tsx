@@ -1,187 +1,316 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useMemo } from 'react';
+import { toast, ToastContainer } from 'react-toastify';
 import Header from '../LayoutAssets/Header';
 import Footer from '../LayoutAssets/Footer';
-import { toast, ToastContainer } from 'react-toastify';
+import { SectionHead, Button, Modal, Card } from '../components';
+import { useFetch, useModal, useGeolocation } from '../hooks';
+import { isWithinProximity } from '../utils';
+import { API_ENDPOINTS, MESSAGES } from '../constants';
+import { Location } from '../types';
 
+// Icon components
+const GeoIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+        <circle cx="12" cy="10" r="3" />
+    </svg>
+);
 
-interface Location {
-    id: string;
-    date: string;
-    location: string;
-    image: string;
-    url: string;
-    title: string;
-    description: string;
-    coordinates: string;
-    riddle: string;
+const LoadingIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" style={{ animation: 'spin 1s linear infinite', width: '24px', height: '24px' }}>
+        <circle cx="12" cy="12" r="10" opacity="0.25" />
+        <path d="M12 2a10 10 0 0 1 10 10" opacity="1" strokeDasharray="15" strokeDashoffset="0" />
+    </svg>
+);
+
+// Trail card component - reusable
+interface TrailCardProps {
+  location: Location;
+  onSelect: (location: Location) => void;
 }
 
+const TrailCard: React.FC<TrailCardProps> = ({ location, onSelect }) => (
+    <Card
+        clickable
+        onClick={() => onSelect(location)}
+        style={{
+            aspectRatio: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+        }}
+    >
+        {/* Image */}
+        <div
+            style={{
+                aspectRatio: '16/10',
+                backgroundImage: `url(${location.image})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                position: 'relative',
+                overflow: 'hidden',
+            }}
+        >
+            <div
+                style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.4) 100%)',
+                }}
+                aria-hidden="true"
+            />
+        </div>
+
+        {/* Content */}
+        <div style={{ padding: '1.5rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <p style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--it-primary)', margin: '0 0 0.5rem' }}>
+                {location.location}
+            </p>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '0 0 0.5rem', color: 'var(--it-text)' }}>
+                {location.title}
+            </h3>
+            <p style={{ fontSize: '0.9rem', color: 'var(--it-text-muted)', margin: 0, lineHeight: 1.5, flex: 1 }}>
+                {location.description}
+            </p>
+            <Button
+                variant="primary"
+                fullWidth
+                style={{ marginTop: '1.25rem' }}
+                onClick={(e) => {
+                    e.stopPropagation();
+                }}
+            >
+                Guess this trail
+            </Button>
+        </div>
+    </Card>
+);
+
+// Check-in form component - reusable
+interface CheckInFormProps {
+  selectedLocation: Location | null;
+  onCheckIn: (playerId: string) => Promise<void>;
+  loading: boolean;
+}
+
+const CheckInForm: React.FC<CheckInFormProps> = ({ selectedLocation, onCheckIn, loading }) => {
+    const [playerId, setPlayerId] = React.useState('');
+
+    const handleSubmit = useCallback(async () => {
+        await onCheckIn(playerId);
+        if (!loading) setPlayerId('');
+    }, [playerId, onCheckIn, loading]);
+
+    return (
+        <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div>
+                <p style={{ fontSize: '0.85rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--it-primary)', margin: '0 0 0.75rem' }}>
+                    Have you been here?
+                </p>
+                <p style={{ color: 'var(--it-text-muted)', fontSize: '0.9rem', margin: 0, lineHeight: 1.6 }}>
+                    Go to this location, then enter your Player ID and tap "Check In." We'll verify you're actually there using your phone's GPS.
+                </p>
+            </div>
+
+            <div>
+                <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--it-text)' }}>
+                    Your Player ID
+                </label>
+                <input
+                    type="text"
+                    placeholder="e.g., RPS1847"
+                    value={playerId}
+                    onChange={(e) => setPlayerId(e.target.value.toUpperCase())}
+                    disabled={loading}
+                    style={{
+                        width: '100%',
+                        padding: '0.85rem 1rem',
+                        borderRadius: 'var(--it-radius)',
+                        border: '1.5px solid var(--it-border)',
+                        background: 'var(--it-bg)',
+                        color: 'var(--it-text)',
+                        fontSize: '1rem',
+                        fontWeight: 600,
+                        letterSpacing: '0.08em',
+                        boxSizing: 'border-box',
+                        textTransform: 'uppercase',
+                    }}
+                />
+                <p style={{ fontSize: '0.75rem', color: 'var(--it-text-muted)', margin: '0.5rem 0 0' }}>
+                    Don't have one? <a href="/join" style={{ color: 'var(--it-primary)', textDecoration: 'none' }}>Sign up first</a>
+                </p>
+            </div>
+
+            <Button
+                variant="primary"
+                fullWidth
+                loading={loading}
+                onClick={handleSubmit}
+                disabled={!playerId.trim()}
+                icon={<GeoIcon />}
+            >
+                Check In
+            </Button>
+        </div>
+    );
+};
+
+// Main Play page
 const Play: React.FC = () => {
-    const [locations, setLocations] = useState<Location[]>([]);
-    const [showModal, setShowModal] = useState(false);
-    const [playerId, setPlayerId] = useState('');
-    const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
+    const { data: locations, loading, error } = useFetch<Location[]>(API_ENDPOINTS.LOCATIONS);
+    const { isOpen, open, close } = useModal();
+    const { getLocation, loading: geoLoading } = useGeolocation();
+    const [selectedLocation, setSelectedLocation] = React.useState<Location | null>(null);
+    const [checkInLoading, setCheckInLoading] = React.useState(false);
 
-    // New function to print current location to the console for testing purposes remove later
-    const printCurrentLocation = () => {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition((position) => {
-                console.log(`Current Position: Latitude: ${position.coords.latitude}, Longitude: ${position.coords.longitude}`);
-            });
-        } else {
-            console.error("Geolocation is not supported by this browser.");
-        }
-    };
+    const handleSelectTrail = useCallback((location: Location) => {
+        setSelectedLocation(location);
+        open();
+    }, [open]);
 
-    const parseToMarkDown = (str: string): string => {
-        return str.replace(/\\n/g, "\n");
-    };
-
-    useEffect(() => {
-        const fetchLocations = async () => {
-            try {
-                const response = await fetch('http://localhost:5164/api/locations');
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const data = await response.json();
-                setLocations(data);
-                printCurrentLocation();
-            } catch (error) {
-                console.error('Failed to fetch location:', error);
-                toast.error('Failed to fetch locations');
-            }
-        };
-
-        fetchLocations();
-    }, []);
-
-    const handleSolveRiddle = async () => {
-        console.log("Submit Answer Clicked");
-        if (!playerId) {
-            console.log("No player ID entered");
-            toast.error('Please enter your playerID');
+    const handleCheckIn = useCallback(async (playerId: string) => {
+        if (!playerId.trim()) {
+            toast.error(MESSAGES.ERROR.REQUIRED_PLAYER_ID);
             return;
         }
+        if (!selectedLocation) return;
 
-        if (!navigator.geolocation) {
-            toast.error('Geolocation is not supported by your browser');
-            return;
-        }
-
-        navigator.geolocation.getCurrentPosition(async (position) => {
-            const { latitude, longitude } = position.coords;
-
-            try {
-                const playerDataResponse = await fetch(`http://localhost:5164/api/Player/retrieveID?playerID=${playerId}`);
-                if (!playerDataResponse.ok) throw new Error('Failed to fetch player data');
-                const playerData = await playerDataResponse.json();
-
-                if (playerData.playerId === playerId && selectedLocation) {
-                    // No longer need to check if selectedLocation is not null here
-                    const proximityThreshold = 0.01; // Example threshold for "closeness", adjust as needed
-                    const targetCoordinates = selectedLocation.coordinates.split(', ').map(Number);
-                    const distanceLat = Math.abs(latitude - targetCoordinates[0]);
-                    const distanceLon = Math.abs(longitude - targetCoordinates[1]);
-
-                    if (distanceLat <= proximityThreshold && distanceLon <= proximityThreshold) {
-                        toast.success('Correct Location! Points added.');
-                        // Logic to add a point to the player's data here
-                    } else {
-                        toast.error('Incorrect Location! Try again.');
-                    }
-                } else {
-                    toast.error('Player does not exist or no location selected');
-                }
-            } catch (error) {
-                console.error('Failed to solve riddle:', error);
-                toast.error('Failed to solve riddle');
+        setCheckInLoading(true);
+        try {
+            const coords = await getLocation();
+            if (!coords) {
+                toast.error(MESSAGES.ERROR.GEOLOCATION_NOT_SUPPORTED);
+                return;
             }
-        }, (error) => {
-            toast.error(`Geolocation error: ${error.message}`);
-        });
-    };
 
-    const handleOpenModal = (id: string) => {
-        const foundLocation = locations.find(loc => loc.id === id);
-        setSelectedLocation(foundLocation || null);
-        setShowModal(true);
-    };
+            // Verify player exists
+            const playerResp = await fetch(`${API_ENDPOINTS.PLAYER_RETRIEVE_ID}?playerID=${playerId}`);
+            if (!playerResp.ok) {
+                toast.error(MESSAGES.ERROR.INVALID_PLAYER_ID);
+                setCheckInLoading(false);
+                return;
+            }
 
+            // Check proximity
+            if (isWithinProximity(coords, selectedLocation.coordinates)) {
+                toast.success(MESSAGES.SUCCESS.CHECKED_IN);
+                close();
+            } else {
+                toast.error(MESSAGES.ERROR.WRONG_LOCATION);
+            }
+        } catch (err) {
+            toast.error(MESSAGES.ERROR.FETCH_FAILED);
+            console.error(err);
+        } finally {
+            setCheckInLoading(false);
+        }
+    }, [selectedLocation, getLocation, close]);
 
+    const trailCount = useMemo(
+        () => locations?.length ?? 0,
+        [locations]
+    );
+
+    if (loading) {
         return (
             <>
                 <Header />
-                <div className="container-margin-top">
-                    <h5>Play</h5>
-                    <p>Travel to the first location and explore the area. Unlock clues
-                        and solve puzzles to find the next location. Share your journey
-                        with us and the community by tagging your discoveries on social
-                        media.</p>
-
-
-
-                    {locations.length > 0 ? (
-                        <div className="row"> {/* Use row here to utilize your CSS for layout */}
-                            {locations.map(locations => (
-                                <div className="card text-center" key={locations.id}>
-                                    <div className="card-header">Explore Location: {locations.title}</div>
-                                    <img src={locations.image} className="card-img-top" alt={locations.title} />
-                                    <div className="card-body">
-                                        <button onClick={() => handleOpenModal(locations.id)} className="btn btn-grey mt-4">
-                                            Solve Riddle
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <p>Loading location...</p>
-                    )}
-                    {showModal && selectedLocation && (
-                        <div className="modal">
-                            <div className="modal-content">
-                                {/* Including location information in the modal */}
-                                <div className="modal-header">
-                                    <h1 className="modal-title fs-5" id="exampleModalLabel">Riddle for first location</h1>
-                                    <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close" onClick={() => setShowModal(false)}></button>
-                                </div>
-
-
-                                {/* Example: Assuming your location object has a 'riddle' property */}
-                                <div>
-                                    {parseToMarkDown(selectedLocation.riddle).split('\n').map((line, index) => (
-                                        <React.Fragment key={index}>
-                                            {line}<br />
-                                        </React.Fragment>
-                                    ))}
-                                </div>
-                                <br />
-                                
-                                <h3>Enter your playerID</h3>
-                                <input
-                                    type="text"
-                                    placeholder="Enter your playerID"
-                                    value={playerId}
-                                    onChange={(e) => setPlayerId(e.target.value)}
-                                />
-                                <br />
-
-                                <button onClick={handleSolveRiddle} className="btn btn-success">
-                                    Submit Answer
-                                </button>
-                                
-                            </div>
-                        </div>
-
-
-                    )}
-
+                <div style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
+                    <LoadingIcon />
+                    <p style={{ color: 'var(--it-text-muted)' }}>Loading trails...</p>
                 </div>
-                <ToastContainer />
                 <Footer />
             </>
         );
-    };
+    }
+
+    return (
+        <>
+            <Header />
+            <main className="it-scope">
+                <section className="it-section" style={{ paddingTop: '3rem' }}>
+                    <SectionHead
+                        eyebrow="Play Now"
+                        title="Guess the trails"
+                        subtitle={
+                            <>
+                                See a photo and riddle. Can you recognize the spot? Head there in person and check in to score points.
+                                {trailCount > 0 && (
+                                    <span style={{ display: 'block', marginTop: '0.75rem', color: 'var(--it-primary)', fontWeight: 600 }}>
+                                        {trailCount} trails waiting to be discovered
+                                    </span>
+                                )}
+                            </>
+                        }
+                    />
+
+                    {locations && locations.length > 0 ? (
+                        <div style={{
+                            maxWidth: '1100px',
+                            margin: '0 auto',
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+                            gap: '1.25rem',
+                        }}>
+                            {locations.map((location) => (
+                                <TrailCard
+                                    key={location.id}
+                                    location={location}
+                                    onSelect={handleSelectTrail}
+                                />
+                            ))}
+                        </div>
+                    ) : (
+                        <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+                            <p style={{ color: 'var(--it-text-muted)' }}>No trails available yet. Check back soon!</p>
+                        </div>
+                    )}
+                </section>
+            </main>
+
+            {/* Modal for riddle and check-in */}
+            <Modal
+                isOpen={isOpen}
+                onClose={close}
+                title={selectedLocation?.title}
+                maxWidth="720px"
+            >
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0 }}>
+                    {/* Left: Photo + Riddle */}
+                    <div style={{ borderRight: '1.5px solid var(--it-border)' }}>
+                        <div
+                            style={{
+                                aspectRatio: '1',
+                                backgroundImage: selectedLocation ? `url(${selectedLocation.image})` : undefined,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                            }}
+                            aria-label={selectedLocation?.title}
+                        />
+                        {selectedLocation && (
+                            <div style={{ padding: '1.5rem' }}>
+                                <p style={{ fontSize: '0.85rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--it-primary)', margin: '0 0 1rem' }}>
+                                    Your riddle
+                                </p>
+                                <div style={{ color: 'var(--it-text)', lineHeight: 1.7, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                                    {selectedLocation.riddle.replace(/\\n/g, '\n')}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Right: Check-in */}
+                    <CheckInForm
+                        selectedLocation={selectedLocation}
+                        onCheckIn={handleCheckIn}
+                        loading={checkInLoading || geoLoading}
+                    />
+                </div>
+            </Modal>
+
+            <ToastContainer position="bottom-right" />
+            <Footer />
+        </>
+    );
+};
 
 export default Play;

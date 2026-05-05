@@ -1,6 +1,11 @@
 # Stage 1: Build the React/Vite frontend
 FROM node:20-alpine AS frontend-builder
 WORKDIR /app/client
+
+# Accept build argument for API base URL (defaults to /api for production)
+ARG VITE_API_BASE=/api
+ENV VITE_API_BASE=$VITE_API_BASE
+
 COPY gatherrounditasca.client/package*.json ./
 RUN npm install
 COPY gatherrounditasca.client/ ./

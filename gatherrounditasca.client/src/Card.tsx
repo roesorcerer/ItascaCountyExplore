@@ -15,7 +15,7 @@ function Card() {
     useEffect(() => {
         // Fetch the locations from your API
         const fetchLocations = async () => {
-            const response = await fetch('http://localhost:5164/locations'); // Use the correct backend URL
+            const response = await fetch('/api/locations');
             if (response.ok) {
                 const data = await response.json();
                 setLocations(data);

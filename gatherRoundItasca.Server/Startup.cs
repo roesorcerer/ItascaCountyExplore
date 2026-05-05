@@ -55,7 +55,11 @@ namespace gatherRoundItasca.Server
                 options.AddPolicy(name: "MyAllowSpecificOrigins",
                                   builder =>
                                   {
-                                      builder.WithOrigins("https://localhost:5173")
+                                      builder.WithOrigins(
+                                                "https://localhost:5173",
+                                                "http://localhost:5164",
+                                                "https://localhost:5165"
+                                             )
                                              .AllowAnyHeader()
                                              .AllowAnyMethod();
                                   });
@@ -109,8 +113,8 @@ namespace gatherRoundItasca.Server
             }
             app.UseStaticFiles(); // Serve static files
 
-            app.UseRouting();
             app.UseCors("MyAllowSpecificOrigins");
+            app.UseRouting();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

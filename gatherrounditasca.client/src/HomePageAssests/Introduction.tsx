@@ -1,81 +1,141 @@
-import infoIcon from '..//assets/imgs/fashion/mn-gr-fall.jpg';
-import infoIcon2 from '..//assets/imgs/fashion/img-2.jpg';
-import infoIcon3 from '..//assets/imgs/fashion/img-3.jpg';
 import { Link } from 'react-router-dom';
-import titleImg from '../assets/imgs/homepage/oldcentrealschool.jpg';
+import heroImg from '../assets/imgs/fashion/mn-gr-fall.jpg';
+import featured1 from '../assets/imgs/slider/slider1.jpg';
+import featured2 from '../assets/imgs/slider/slider2.jpg';
+import featured3 from '../assets/imgs/slider/slider3.jpg';
 
+const PlayerIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+        <circle cx="12" cy="7" r="4" />
+    </svg>
+);
+
+const RiddleIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="7" />
+        <path d="M21 21l-4.3-4.3" />
+        <path d="M9.5 11h.01M11 9.5v.01M12.5 11h.01M11 12.5v.01" />
+    </svg>
+);
+
+const PinIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+        <circle cx="12" cy="10" r="3" />
+    </svg>
+);
+
+const ArrowRight = () => (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M5 12h14M13 5l7 7-7 7" />
+    </svg>
+);
 
 const Introduction = () => {
-    { /* Images and text for the quick information section. This is for the middle section images and inforamtion iteration */ }
-    const images = [
-        {
-            src: infoIcon, className: "center-img", text: "Create a PlayerID", title: "Go on a new kind of adventure",
-            alt: "https://www.planetware.com/minnesota/grand-rapids-us-mn-gr.htm",
-            detail: "Start by answering a few simple questions. These questions will help generate you a unique number to play so you are able to track your progress.",
-        },
-        {
-            src: infoIcon2, className: "left-img", text: "Search through Locations", title: "Search through Locations",
-            detail: "Look through the locations and see if you can identify any local spots. See if you can guess the location."
-},
-        {
-            src: infoIcon3, className: "right-img", text: "Make your guess!", title: "Go out and Explore!",
-            detail: "Take it one guess at a time, or just spend the day seeing how much you know about your time. Climb the ranks and find the locations."
-}
+    const featured = [
+        { img: featured1, tag: 'Forest trail', title: 'Can you guess this lakeside loop?', hint: 'Pines, a footbridge, and a view that locals know well.' },
+        { img: featured2, tag: 'Town gem', title: 'A historic spot near downtown', hint: 'Look for the building that has watched the river flow for a century.' },
+        { img: featured3, tag: 'Hidden corner', title: 'A community favorite', hint: 'Quiet, easy to miss, and worth the walk.' },
     ];
 
     return (
-        <>
-            {/* Section for Banner Image and Title. A quick introduction to the game. */}
-            <section className="banner">
-                <div className="container">
-                    {/*Header of the Home Page with quick PlayNow button and a brief introduction to the game.*/}           
-                    <div className="banner-img" style={{ backgroundImage: `url(${titleImg})` }}>
-                    </div>
-                    {/* Image Credit */}
-                    <div className="image-credit">
-                        Image by <a href="https://www.flickr.com/photos/peterjsieger/8155619634/in/photostream/" target="_blank" rel="noopener noreferrer">Peter Sieger</a> on Flickr
+        <main className="it-scope">
+            {/* HERO */}
+            <section className="it-hero">
+                <div className="it-hero__bg" style={{ backgroundImage: `url(${heroImg})` }} aria-hidden="true" />
+                <div className="it-hero__inner">
+                    <span className="it-eyebrow">
+                        <span className="dot" />
+                        Grand Rapids, Minnesota
+                    </span>
+                    <h1>
+                        A real-world scavenger hunt for <span className="accent">Itasca County trails</span>
+                    </h1>
+                    <p className="it-hero__sub">
+                        We show you a photo and a riddle. You figure out which local trail or hidden gem it is — then go there.
+                        Check in on location, score points, and climb the leaderboard while learning what makes our community special.
+                    </p>
+                    <div className="it-hero__ctas">
+                        <Link to="/join" className="it-btn it-btn-primary">
+                            Get your Player ID <ArrowRight />
+                        </Link>
+                        <a href="#how" className="it-btn it-btn-ghost">See how it works</a>
                     </div>
 
-                    {/* Banner Box with quick information and a button to sign up. */} 
-                    <div className="columns">
-                            <div className="column is-12">
-                            <div className="banner-box has-text-centered"> 
-                            <div className="meta-cat">
-                                <span className="is-capitalize letter-spacing-1 cat-name font-extra text-color">Explore and Discover Your Local Community</span>
-                                </div>
-                                <div className="post-title">
-                                    <Link to="/about"><h2>Sign up now</h2></Link></div>
-                                <div className="post-content">
-                                    <strong>Travel Through Grand Rapids and its sourrounding areas to see what little gems it has to offer.</strong>
-                                    <p>Take the limited chance to participate and learn about the area around you in a new and fun way.</p>
-                                    <Link to="/play" className="btn btn-grey mt-4">Play Now</Link>
-                                </div>
-                            </div>
-                        </div>
+                    <div className="it-hero__stats">
+                        <div className="it-stat"><strong>20+</strong><span>local trails &amp; landmarks</span></div>
+                        <div className="it-stat"><strong>Free</strong><span>to play, all ages</span></div>
+                        <div className="it-stat"><strong>Leave no trace</strong><span>respect the land</span></div>
                     </div>
                 </div>
-</section>
-            {/* Section for quick information on how the game works. */}            
-            <section className="section-padding pt-4">
-                <div className="container">
-                    {images.map((image, index) => (
-                        <div key={index} className="columns is-desktop">
-                            <div className="column is-5-desktop">
-                                {/* Center of the page with Images and quick information on how to sign up */} 
-                                <div className={`image-container ${image.className}`} style={{ backgroundImage: `url(${image.src})` }}>
-                                    <div className="text-over-image">
-                                        <span className="letter-spacing cat-name font-extra text-color">{image.text}</span>
-                                        <h3 className="post-title mt-2">{image.title}</h3>
-                                        <p>{image.detail}</p>
-                                    </div>
-                                </div>  
-                                </div>
-                         </div>
-                    ))}
+            </section>
+
+            {/* HOW IT WORKS */}
+            <section id="how" className="it-section">
+                <div className="it-section__head">
+                    <span className="it-section__eyebrow">How it works</span>
+                    <h2>Three steps to your next adventure</h2>
+                    <p>No app to install, no fees. Just a phone with location turned on and a sense of curiosity.</p>
+                </div>
+
+                <div className="it-steps">
+                    <article className="it-step">
+                        <span className="it-step__num">1</span>
+                        <div className="it-step__icon"><PlayerIcon /></div>
+                        <h3>Get your Player ID</h3>
+                        <p>Answer three quick questions and we'll generate a memorable Player ID. That's all you need to start scoring points.</p>
+                    </article>
+
+                    <article className="it-step">
+                        <span className="it-step__num">2</span>
+                        <div className="it-step__icon"><RiddleIcon /></div>
+                        <h3>Pick a trail &amp; read the riddle</h3>
+                        <p>Browse photos of local trails and landmarks. Each one comes with a riddle and a fact about the place — your only clue is what you can recognize.</p>
+                    </article>
+
+                    <article className="it-step">
+                        <span className="it-step__num">3</span>
+                        <div className="it-step__icon"><PinIcon /></div>
+                        <h3>Walk there to check in</h3>
+                        <p>Got it? Head to the spot in person. When your phone confirms you're there, we add the points to your tally. Climb the leaderboard.</p>
+                    </article>
                 </div>
             </section>
-      
-        </>
+
+            {/* FEATURED PREVIEW */}
+            <section className="it-featured it-section">
+                <div className="it-section__head">
+                    <span className="it-section__eyebrow">Now playing</span>
+                    <h2>A few trails waiting to be guessed</h2>
+                    <p>Recognize one? Sign up, head out, and prove it.</p>
+                </div>
+
+                <div className="it-featured__grid">
+                    {featured.map((f, i) => (
+                        <article key={i} className="it-card">
+                            <div className="it-card__img" style={{ backgroundImage: `url(${f.img})` }} role="img" aria-label={f.title} />
+                            <div className="it-card__body">
+                                <span className="it-card__tag">{f.tag}</span>
+                                <h4>{f.title}</h4>
+                                <p>{f.hint}</p>
+                            </div>
+                        </article>
+                    ))}
+                </div>
+
+                <div style={{ textAlign: 'center', marginTop: '2.5rem' }}>
+                    <Link to="/play" className="it-btn it-btn-ghost">See all trails <ArrowRight /></Link>
+                </div>
+            </section>
+
+            {/* CTA BANNER */}
+            <section className="it-cta">
+                <h2>Ready to explore Itasca?</h2>
+                <p>Get your Player ID in under a minute. The trails aren't going anywhere — but the leaderboard moves fast.</p>
+                <Link to="/join" className="it-btn it-btn-accent">Start playing <ArrowRight /></Link>
+            </section>
+        </main>
     );
 };
 

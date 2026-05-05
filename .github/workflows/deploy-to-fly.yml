@@ -6,7 +6,35 @@ on:
       - production
 
 jobs:
+  build-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build frontend
+        working-directory: gatherrounditasca.client
+        run: |
+          npm install
+          npm run build
+          echo "✓ Frontend build successful"
+
+      - name: Verify build output
+        run: |
+          if [ -d "gatherrounditasca.client/dist" ]; then
+            echo "✓ Frontend dist directory created"
+            ls -la gatherrounditasca.client/dist
+          else
+            echo "✗ Frontend dist directory not found"
+            exit 1
+          fi
+
   deploy:
+    needs: build-and-verify
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

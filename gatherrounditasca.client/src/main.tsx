@@ -4,6 +4,7 @@ import Layout from './LayoutAssets/Layout.js'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import './assets/css/index.css'
 import './assets/css/StyleSheet.css'
+import './assets/css/theme.css'
 import 'react-toastify/dist/ReactToastify.css';
 
 
