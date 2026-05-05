@@ -92,7 +92,7 @@ interface CheckInFormProps {
   loading: boolean;
 }
 
-const CheckInForm: React.FC<CheckInFormProps> = ({ selectedLocation, onCheckIn, loading }) => {
+const CheckInForm: React.FC<CheckInFormProps> = ({ onCheckIn, loading }) => {
     const [playerId, setPlayerId] = React.useState('');
 
     const handleSubmit = useCallback(async () => {
@@ -156,7 +156,7 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ selectedLocation, onCheckIn, 
 
 // Main Play page
 const Play: React.FC = () => {
-    const { data: locations, loading, error } = useFetch<Location[]>(API_ENDPOINTS.LOCATIONS);
+    const { data: locations, loading } = useFetch<Location[]>(API_ENDPOINTS.LOCATIONS);
     const { isOpen, open, close } = useModal();
     const { getLocation, loading: geoLoading } = useGeolocation();
     const [selectedLocation, setSelectedLocation] = React.useState<Location | null>(null);

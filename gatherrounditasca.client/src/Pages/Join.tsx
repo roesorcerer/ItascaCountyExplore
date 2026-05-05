@@ -169,7 +169,7 @@ const Join: React.FC = () => {
         form.values.playerId = playerId;
         open();
       },
-      onError: (err) => toast.error('Failed to register'),
+      onError: () => toast.error('Failed to register'),
     }
   );
 
@@ -244,7 +244,7 @@ const Join: React.FC = () => {
                 type="select"
                 value={form.values.color}
                 onChange={(val) => form.setFieldValue('color', val)}
-                options={FORM_OPTIONS.colors}
+                options={[...FORM_OPTIONS.colors]}
               />
 
               <FormField
@@ -252,7 +252,7 @@ const Join: React.FC = () => {
                 type="select"
                 value={form.values.food}
                 onChange={(val) => form.setFieldValue('food', val)}
-                options={FORM_OPTIONS.foods}
+                options={[...FORM_OPTIONS.foods]}
               />
 
               <FormField
@@ -260,7 +260,7 @@ const Join: React.FC = () => {
                 type="select"
                 value={form.values.animal}
                 onChange={(val) => form.setFieldValue('animal', val)}
-                options={FORM_OPTIONS.animals}
+                options={[...FORM_OPTIONS.animals]}
               />
 
               {/* Live preview */}

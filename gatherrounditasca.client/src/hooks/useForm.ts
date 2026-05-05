@@ -1,10 +1,5 @@
 import { useState, useCallback } from 'react';
 
-interface FormField {
-  value: string;
-  error?: string;
-}
-
 interface UseFormOptions {
   onSubmit?: (values: Record<string, string>) => Promise<void>;
   onError?: (error: Error) => void;

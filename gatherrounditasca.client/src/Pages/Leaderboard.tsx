@@ -84,9 +84,10 @@ const RankingsTable: React.FC<RankingsTableProps> = ({ entries }) => (
 
 // Main Leaderboard page
 const Leaderboard: React.FC = () => {
-  const { data: leaderboard = [], loading } = useFetch<LeaderboardEntry[]>(
+  const { data: leaderboard, loading } = useFetch<LeaderboardEntry[]>(
     API_ENDPOINTS.LEADERBOARD
   );
+  const entries = leaderboard ?? [];
 
   if (loading) {
     return (
@@ -112,22 +113,22 @@ const Leaderboard: React.FC = () => {
           />
 
           {/* Podium */}
-          {leaderboard.length > 0 && (
-            <Podium entries={leaderboard} />
+          {entries.length > 0 && (
+            <Podium entries={entries} />
           )}
 
           {/* Full Rankings */}
-          {leaderboard.length > 0 && (
+          {entries.length > 0 && (
             <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
               <h2 style={{ fontSize: '1.35rem', fontWeight: 800, margin: '2rem 0 1.5rem', color: 'var(--it-text)' }}>
                 Full Rankings
               </h2>
-              <RankingsTable entries={leaderboard} />
+              <RankingsTable entries={entries} />
             </div>
           )}
 
           {/* Empty state */}
-          {leaderboard.length === 0 && !loading && (
+          {entries.length === 0 && !loading && (
             <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
               <p style={{ fontSize: '1.1rem', color: 'var(--it-text-muted)' }}>
                 No players yet. <a href="/join" style={{ color: 'var(--it-primary)', textDecoration: 'none' }}>Be the first!</a>
