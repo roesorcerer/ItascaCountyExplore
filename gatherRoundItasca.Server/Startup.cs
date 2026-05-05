@@ -20,17 +20,13 @@ namespace gatherRoundItasca.Server
 
         public void ConfigureServices(IServiceCollection services)
         {
-            var mongoConnectionString = Configuration["MongoDb:ConnectionString"] ?? Configuration.GetConnectionString("MongoDb");
+            var mongoConnectionString = Configuration["MongoDb:ConnectionString"]
+                ?? Environment.GetEnvironmentVariable("MONGODB_CONNECTION_STRING");
             var mongoDatabaseName = Configuration["MongoDb:DatabaseName"] ?? "itascatrails";
 
             if (string.IsNullOrWhiteSpace(mongoConnectionString))
             {
-                throw new InvalidOperationException("MongoDB connection string is missing. Set MongoDb:ConnectionString in appsettings or user secrets.");
-            }
-
-            if (mongoConnectionString.Contains("<db_password>", StringComparison.OrdinalIgnoreCase))
-            {
-                throw new InvalidOperationException("MongoDB connection string still contains <db_password>. Replace it with your real database password.");
+                throw new InvalidOperationException("MongoDB connection string is missing. Set MONGODB_CONNECTION_STRING environment variable.");
             }
 
             services.AddSingleton<IMongoClient>(_ => new MongoClient(mongoConnectionString));
