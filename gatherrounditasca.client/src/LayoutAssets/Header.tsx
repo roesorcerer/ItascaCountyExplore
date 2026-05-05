@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
-import Button from '../components/Button';
 
 // Icon components
 const PinIcon = () => (
