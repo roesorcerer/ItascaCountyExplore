@@ -86,7 +86,7 @@ namespace gatherRoundItasca.Server
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "An error occurred seeding the DB.");
+                    logger.LogWarning(ex, "An error occurred seeding the DB. The app will continue but API endpoints may fail until the database connection is fixed.");
                 }
             }
 
