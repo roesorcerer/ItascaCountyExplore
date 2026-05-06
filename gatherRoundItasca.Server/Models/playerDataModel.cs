@@ -33,6 +33,10 @@ namespace gatherRoundItasca.Server.Models
         //Points the player has accumulated with the get and set methods
         [Required]
         public int Points { get; set; }
+
+        //PIN for login (hashed) with the get and set methods
+        [Required]
+        public string? PinHash { get; set; }
     }
 }
 

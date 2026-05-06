@@ -24,6 +24,10 @@ namespace gatherRoundItasca.Server
                 ?? Environment.GetEnvironmentVariable("MONGODB_CONNECTION_STRING");
             var mongoDatabaseName = Configuration["MongoDb:DatabaseName"] ?? "itascatrails";
 
+            System.Diagnostics.Debug.WriteLine($"DEBUG: MongoConnectionString from config: {Configuration["MongoDb:ConnectionString"]}");
+            System.Diagnostics.Debug.WriteLine($"DEBUG: MONGODB_CONNECTION_STRING env: {Environment.GetEnvironmentVariable("MONGODB_CONNECTION_STRING")}");
+            System.Diagnostics.Debug.WriteLine($"DEBUG: Final mongoConnectionString: {mongoConnectionString}");
+
             if (string.IsNullOrWhiteSpace(mongoConnectionString))
             {
                 throw new InvalidOperationException("MongoDB connection string is missing. Set MONGODB_CONNECTION_STRING environment variable.");

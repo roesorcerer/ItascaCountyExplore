@@ -2,6 +2,7 @@
 using gatherRoundItasca.Server.Services;
 using gatherRoundItasca.Server.Models;
 using MongoDB.Driver;
+using BCrypt.Net;
 namespace gatherRoundItasca.Server.Controllers;
 
 //Lots of excess here between the PlayerRegistration and the playerDataModel. Need to clean up the code and make it more efficient.
@@ -23,11 +24,16 @@ public class PlayerController : ControllerBase
 
     [HttpPost]
     [Route("register")]
-    public async Task<IActionResult> RegisterPlayer([FromBody] PlayerDataModel registration)
+    public async Task<IActionResult> RegisterPlayer([FromBody] PlayerRegistrationRequest registration)
     {
         if (string.IsNullOrWhiteSpace(registration.PlayerId))
         {
             return BadRequest(new { Message = "PlayerId is required." });
+        }
+
+        if (string.IsNullOrWhiteSpace(registration.Pin) || registration.Pin.Length != 4)
+        {
+            return BadRequest(new { Message = "PIN must be 4 digits." });
         }
 
         var existingPlayer = await _players.Find(x => x.PlayerId == registration.PlayerId).FirstOrDefaultAsync();
@@ -36,8 +42,18 @@ public class PlayerController : ControllerBase
             return Conflict(new { Message = "PlayerId already exists." });
         }
 
-        registration.Points = 0;
-        await _players.InsertOneAsync(registration);
+        var playerData = new PlayerDataModel
+        {
+            PlayerId = registration.PlayerId,
+            Email = registration.Email,
+            FavoriteColor = registration.FavoriteColor,
+            FavoriteFood = registration.FavoriteFood,
+            FavoriteAnimal = registration.FavoriteAnimal,
+            Points = 0,
+            PinHash = BCrypt.Net.BCrypt.HashPassword(registration.Pin)
+        };
+
+        await _players.InsertOneAsync(playerData);
 
         // Code to send email
         if (!string.IsNullOrWhiteSpace(registration.Email))
@@ -52,7 +68,47 @@ public class PlayerController : ControllerBase
             }
         }
 
-        return Ok(new { playerId = registration.PlayerId });
+        return Ok(new { playerId = playerData.PlayerId });
+    }
+
+    [HttpPost]
+    [Route("login")]
+    public async Task<IActionResult> LoginPlayer([FromBody] PlayerLoginRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.PlayerId) || string.IsNullOrWhiteSpace(request.Pin))
+        {
+            return BadRequest(new { Message = "PlayerId and PIN are required." });
+        }
+
+        var player = await _players.Find(x => x.PlayerId == request.PlayerId).FirstOrDefaultAsync();
+        if (player == null)
+        {
+            return Unauthorized(new { Message = "Invalid PlayerId or PIN." });
+        }
+
+        if (string.IsNullOrWhiteSpace(player.PinHash))
+        {
+            return Unauthorized(new { Message = "Account needs PIN setup. Please contact support." });
+        }
+
+        bool isValidPin = BCrypt.Net.BCrypt.Verify(request.Pin, player.PinHash);
+        if (!isValidPin)
+        {
+            return Unauthorized(new { Message = "Invalid PlayerId or PIN." });
+        }
+
+        return Ok(new
+        {
+            success = true,
+            player = new
+            {
+                playerId = player.PlayerId,
+                email = player.Email,
+                favoriteColor = player.FavoriteColor,
+                favoriteFood = player.FavoriteFood,
+                favoriteAnimal = player.FavoriteAnimal
+            }
+        });
     }
 
     [HttpGet("retrieveID")]
@@ -69,7 +125,14 @@ public class PlayerController : ControllerBase
             return NotFound(new { Message = "Player not found" });
         }
 
-        return Ok(new { playerId = player.PlayerId });
+        return Ok(new
+        {
+            PlayerId = player.PlayerId,
+            Email = player.Email,
+            FavoriteColor = player.FavoriteColor,
+            FavoriteFood = player.FavoriteFood,
+            FavoriteAnimal = player.FavoriteAnimal
+        });
     }
 
 
@@ -117,5 +180,22 @@ public class PlayerController : ControllerBase
         return PlayerEmailRetrival(email);
     }
 
+}
+
+// Request models
+public class PlayerRegistrationRequest
+{
+    public string? PlayerId { get; set; }
+    public string? Email { get; set; }
+    public string? FavoriteColor { get; set; }
+    public string? FavoriteFood { get; set; }
+    public string? FavoriteAnimal { get; set; }
+    public string? Pin { get; set; }
+}
+
+public class PlayerLoginRequest
+{
+    public string? PlayerId { get; set; }
+    public string? Pin { get; set; }
 }
 

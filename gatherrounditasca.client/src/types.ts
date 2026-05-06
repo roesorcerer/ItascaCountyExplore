@@ -12,6 +12,8 @@ export interface Location {
   riddle: string;
 }
 
+export type Trail = Location;
+
 export interface LeaderboardEntry {
   playerId: string;
   ranking: number;

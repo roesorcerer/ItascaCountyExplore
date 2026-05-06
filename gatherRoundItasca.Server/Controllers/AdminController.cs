@@ -204,6 +204,42 @@ public class AdminController : ControllerBase
         return NoContent();
     }
 
+    [HttpPost("fix-image-paths")]
+    public async Task<IActionResult> FixImagePathsAsync()
+    {
+        // Find locations with paths starting with "public/" or "/public/"
+        var filter = Builders<LocationModel>.Filter.Or(
+            Builders<LocationModel>.Filter.Regex(x => x.Image, new MongoDB.Bson.BsonRegularExpression("^public/")),
+            Builders<LocationModel>.Filter.Regex(x => x.Image, new MongoDB.Bson.BsonRegularExpression("^/public/"))
+        );
+
+        var locations = await _locations.Find(filter).ToListAsync();
+
+        if (locations.Count == 0)
+        {
+            return Ok(new { message = "No image paths need fixing.", fixedCount = 0 });
+        }
+
+        var fixedCount = 0;
+        foreach (var location in locations)
+        {
+            if (location.Image != null)
+            {
+                // Remove both "public/" and "/public/" prefixes
+                var originalPath = location.Image;
+                location.Image = location.Image.Replace("/public/", "/").Replace("public/", "/");
+
+                if (originalPath != location.Image)
+                {
+                    await _locations.ReplaceOneAsync(x => x.Id == location.Id, location);
+                    fixedCount++;
+                }
+            }
+        }
+
+        return Ok(new { message = "Image paths fixed successfully.", fixedCount });
+    }
+
     [HttpGet("users")]
     public async Task<ActionResult<IEnumerable<PlayerDataModel>>> GetUsersAsync()
     {

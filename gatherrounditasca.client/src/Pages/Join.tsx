@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '../LayoutAssets/Header';
 import Footer from '../LayoutAssets/Footer';
 import { Button, Modal, SectionHead } from '../components';
@@ -7,6 +8,7 @@ import { useForm } from '../hooks/useForm';
 import { generatePlayerId, copyToClipboard } from '../utils';
 import { API_ENDPOINTS, MESSAGES, FORM_OPTIONS } from '../constants';
 import { toast } from 'react-toastify';
+import { useAuth } from '../contexts/AuthContext';
 
 // Icons
 const CopyIcon = () => (
@@ -147,9 +149,11 @@ const Join: React.FC = () => {
   const { isOpen, open, close } = useModal();
   const [copied, setCopied] = React.useState(false);
   const [retrieveLoading, setRetrieveLoading] = React.useState(false);
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
   const form = useForm(
-    { email: '', color: '', food: '', animal: '' },
+    { email: '', color: '', food: '', animal: '', pin: '' },
     {
       onSubmit: async (values) => {
         // Register player
@@ -163,10 +167,21 @@ const Join: React.FC = () => {
             favoriteFood: values.food,
             favoriteAnimal: values.animal,
             playerId,
+            pin: values.pin,
           }),
         });
         if (!response.ok) throw new Error('Registration failed');
         form.values.playerId = playerId;
+
+        // Auto-login
+        login({
+          playerId,
+          email: values.email,
+          favoriteColor: values.color,
+          favoriteFood: values.food,
+          favoriteAnimal: values.animal,
+        });
+
         open();
       },
       onError: () => toast.error('Failed to register'),
@@ -181,8 +196,12 @@ const Join: React.FC = () => {
   );
 
   const validateForm = useCallback(() => {
-    if (!form.values.email || !form.values.color || !form.values.food || !form.values.animal) {
+    if (!form.values.email || !form.values.color || !form.values.food || !form.values.animal || !form.values.pin) {
       toast.error(MESSAGES.ERROR.REQUIRED_FIELD);
+      return false;
+    }
+    if (form.values.pin.length !== 4) {
+      toast.error('PIN must be 4 digits');
       return false;
     }
     return true;
@@ -262,6 +281,36 @@ const Join: React.FC = () => {
                 onChange={(val) => form.setFieldValue('animal', val)}
                 options={[...FORM_OPTIONS.animals]}
               />
+
+              <div>
+                <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.5rem', fontSize: '0.95rem' }}>
+                  🔒 Create a 4-digit PIN
+                </label>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={4}
+                  value={form.values.pin}
+                  onChange={(e) => form.setFieldValue('pin', e.target.value.replace(/\D/g, ''))}
+                  placeholder="••••"
+                  style={{
+                    width: '100%',
+                    padding: '0.85rem 1rem',
+                    borderRadius: 'var(--it-radius)',
+                    border: '1.5px solid var(--it-border)',
+                    background: 'var(--it-bg-elev)',
+                    color: 'var(--it-text)',
+                    fontSize: '1.25rem',
+                    letterSpacing: '0.5em',
+                    textAlign: 'center',
+                    boxSizing: 'border-box',
+                  }}
+                />
+                <p style={{ fontSize: '0.75rem', color: 'var(--it-text-muted)', margin: '0.5rem 0 0' }}>
+                  You'll use this PIN to log in (easy to remember, keeps your account secure)
+                </p>
+              </div>
 
               {/* Live preview */}
               {form.values.color && form.values.food && form.values.animal && (
@@ -348,9 +397,9 @@ const Join: React.FC = () => {
           >
             {copied ? 'Copied!' : 'Copy to clipboard'}
           </Button>
-          <a href="/play" className="it-btn it-btn-primary" style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-            Start playing →
-          </a>
+          <Button variant="primary" fullWidth onClick={() => navigate('/dashboard')}>
+            Go to dashboard →
+          </Button>
         </div>
       </Modal>
 

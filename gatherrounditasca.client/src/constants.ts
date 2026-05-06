@@ -5,8 +5,10 @@ export const API_BASE = import.meta.env.VITE_API_BASE || '/api';
 
 export const API_ENDPOINTS = {
   LOCATIONS: `${API_BASE}/locations`,
+  TRAILS: `${API_BASE}/admin/trails`,
   LEADERBOARD: `${API_BASE}/leaderboard`,
   PLAYER_REGISTER: '/api/player/register',
+  PLAYER_LOGIN: '/api/player/login',
   PLAYER_RETRIEVE: '/api/player/retrieve',
   PLAYER_RETRIEVE_ID: `${API_BASE}/Player/retrieveID`,
   UPDATES: `${API_BASE}/updates`,

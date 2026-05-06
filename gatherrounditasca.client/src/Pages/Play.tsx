@@ -7,6 +7,7 @@ import { useFetch, useModal, useGeolocation } from '../hooks';
 import { isWithinProximity } from '../utils';
 import { API_ENDPOINTS, MESSAGES } from '../constants';
 import { Location } from '../types';
+import { useAuth } from '../contexts/AuthContext';
 
 // Icon components
 const GeoIcon = () => (
@@ -90,10 +91,17 @@ interface CheckInFormProps {
   selectedLocation: Location | null;
   onCheckIn: (playerId: string) => Promise<void>;
   loading: boolean;
+  defaultPlayerId?: string;
 }
 
-const CheckInForm: React.FC<CheckInFormProps> = ({ onCheckIn, loading }) => {
-    const [playerId, setPlayerId] = React.useState('');
+const CheckInForm: React.FC<CheckInFormProps> = ({ onCheckIn, loading, defaultPlayerId }) => {
+    const [playerId, setPlayerId] = React.useState(defaultPlayerId || '');
+
+    React.useEffect(() => {
+      if (defaultPlayerId) {
+        setPlayerId(defaultPlayerId);
+      }
+    }, [defaultPlayerId]);
 
     const handleSubmit = useCallback(async () => {
         await onCheckIn(playerId);
@@ -161,6 +169,7 @@ const Play: React.FC = () => {
     const { getLocation, loading: geoLoading } = useGeolocation();
     const [selectedLocation, setSelectedLocation] = React.useState<Location | null>(null);
     const [checkInLoading, setCheckInLoading] = React.useState(false);
+    const { user } = useAuth();
 
     const handleSelectTrail = useCallback((location: Location) => {
         setSelectedLocation(location);
@@ -303,6 +312,7 @@ const Play: React.FC = () => {
                         selectedLocation={selectedLocation}
                         onCheckIn={handleCheckIn}
                         loading={checkInLoading || geoLoading}
+                        defaultPlayerId={user?.playerId}
                     />
                 </div>
             </Modal>

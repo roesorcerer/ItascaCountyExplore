@@ -226,7 +226,10 @@ body {
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    transition: background 0.15s ease;
 }
+.it-burger:hover { background: var(--it-bg-muted); }
+.it-burger svg { width: 20px; height: 20px; }
 
 @media (max-width: 860px) {
     .it-burger { display: inline-flex; }
@@ -504,6 +507,7 @@ body {
     aspect-ratio: 16/10;
     background-size: cover;
     background-position: center;
+    filter: blur(8px);
 }
 .it-card__body { padding: 1.25rem; }
 .it-card__tag {

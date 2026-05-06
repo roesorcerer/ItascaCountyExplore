@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
+import { useAuth } from '../contexts/AuthContext';
 
 // Icon components
 const PinIcon = () => (
@@ -44,6 +45,7 @@ const Header: React.FC = () => {
     const [open, setOpen] = useState(false);
     const closeMenu = useCallback(() => setOpen(false), []);
     const toggleMenu = useCallback(() => setOpen(o => !o), []);
+    const { user, isAuthenticated } = useAuth();
 
     return (
         <header className="it-header it-scope">
@@ -70,13 +72,43 @@ const Header: React.FC = () => {
                     <NavItem to="/about" onClick={closeMenu}>How it works</NavItem>
                     <NavItem to="/play" onClick={closeMenu}>Play</NavItem>
                     <NavItem to="/leaderboard" onClick={closeMenu}>Leaderboard</NavItem>
-                    <Link
-                        to="/join"
-                        className="it-btn it-btn-primary it-nav__cta"
-                        onClick={closeMenu}
-                    >
-                        Get a Player ID
-                    </Link>
+                    {isAuthenticated ? (
+                        <>
+                            <NavItem to="/dashboard" onClick={closeMenu}>Dashboard</NavItem>
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                padding: '0.5rem 0.75rem',
+                                background: 'var(--it-bg-muted)',
+                                borderRadius: 'var(--it-radius)',
+                                fontSize: '0.85rem',
+                                fontWeight: 700,
+                                fontFamily: 'monospace',
+                                color: 'var(--it-primary)',
+                            }}>
+                                {user?.playerId}
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <Link
+                                to="/login"
+                                className="it-btn it-btn-ghost it-nav__cta"
+                                onClick={closeMenu}
+                                style={{ marginRight: '0.5rem' }}
+                            >
+                                Log in
+                            </Link>
+                            <Link
+                                to="/join"
+                                className="it-btn it-btn-primary it-nav__cta"
+                                onClick={closeMenu}
+                            >
+                                Sign up
+                            </Link>
+                        </>
+                    )}
                 </nav>
 
                 {/* Theme toggle */}

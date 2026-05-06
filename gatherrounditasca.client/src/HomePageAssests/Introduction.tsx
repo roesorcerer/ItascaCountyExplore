@@ -1,8 +1,10 @@
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import heroImg from '../assets/imgs/fashion/mn-gr-fall.jpg';
-import featured1 from '../assets/imgs/slider/slider1.jpg';
-import featured2 from '../assets/imgs/slider/slider2.jpg';
-import featured3 from '../assets/imgs/slider/slider3.jpg';
+import { useFetch, useModal } from '../hooks';
+import { Trail } from '../types';
+import { API_ENDPOINTS } from '../constants';
+import { Modal } from '../components';
 
 const PlayerIcon = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -33,11 +35,33 @@ const ArrowRight = () => (
 );
 
 const Introduction = () => {
-    const featured = [
-        { img: featured1, tag: 'Forest trail', title: 'Can you guess this lakeside loop?', hint: 'Pines, a footbridge, and a view that locals know well.' },
-        { img: featured2, tag: 'Town gem', title: 'A historic spot near downtown', hint: 'Look for the building that has watched the river flow for a century.' },
-        { img: featured3, tag: 'Hidden corner', title: 'A community favorite', hint: 'Quiet, easy to miss, and worth the walk.' },
-    ];
+    const navigate = useNavigate();
+    const { data: allTrails, loading } = useFetch<Trail[]>(API_ENDPOINTS.TRAILS);
+    const [featured, setFeatured] = useState<Trail[]>([]);
+    const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
+    const [selectedTrail, setSelectedTrail] = useState<Trail | null>(null);
+    const { isOpen, open, close } = useModal();
+
+    useEffect(() => {
+        if (allTrails && allTrails.length > 0) {
+            const shuffled = [...allTrails].sort(() => Math.random() - 0.5);
+            setFeatured(shuffled.slice(0, 3));
+        }
+    }, [allTrails]);
+
+    const getImagePath = (imagePath: string) => {
+        const cleanPath = imagePath.replace(/^public\//, '/');
+        return cleanPath.replace(/\.jpg$/i, '.JPG');
+    };
+
+    const handleImageError = (id: string) => {
+        setFailedImages(prev => new Set(prev).add(id));
+    };
+
+    const handleCardClick = (trail: Trail) => {
+        setSelectedTrail(trail);
+        open();
+    };
 
     return (
         <main className="it-scope">
@@ -112,16 +136,50 @@ const Introduction = () => {
                 </div>
 
                 <div className="it-featured__grid">
-                    {featured.map((f, i) => (
-                        <article key={i} className="it-card">
-                            <div className="it-card__img" style={{ backgroundImage: `url(${f.img})` }} role="img" aria-label={f.title} />
-                            <div className="it-card__body">
-                                <span className="it-card__tag">{f.tag}</span>
-                                <h4>{f.title}</h4>
-                                <p>{f.hint}</p>
-                            </div>
-                        </article>
-                    ))}
+                    {loading ? (
+                        <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem' }}>Loading trails...</div>
+                    ) : featured.length > 0 ? (
+                        featured.map((f: Trail) => (
+                            <article
+                                key={f.id}
+                                className="it-card"
+                                onClick={() => handleCardClick(f)}
+                                style={{ cursor: 'pointer' }}
+                            >
+                                <div
+                                    className="it-card__img"
+                                    style={{
+                                        backgroundImage: failedImages.has(String(f.id)) ? 'none' : `url(${getImagePath(f.image)})`,
+                                        backgroundColor: failedImages.has(String(f.id)) ? 'var(--it-bg-muted)' : 'transparent',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}
+                                    role="img"
+                                    aria-label={f.title}
+                                >
+                                    {failedImages.has(String(f.id)) && (
+                                        <span style={{ color: 'var(--it-text-muted)', fontSize: '0.9rem', textAlign: 'center', padding: '1rem' }}>
+                                            Image unavailable
+                                        </span>
+                                    )}
+                                    <img
+                                        src={getImagePath(f.image)}
+                                        style={{ display: 'none' }}
+                                        onError={() => handleImageError(String(f.id))}
+                                        alt=""
+                                    />
+                                </div>
+                                <div className="it-card__body">
+                                    <span className="it-card__tag">{f.location}</span>
+                                    <h4>{f.title}</h4>
+                                    <p>{f.description}</p>
+                                </div>
+                            </article>
+                        ))
+                    ) : (
+                        <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem' }}>No trails available</div>
+                    )}
                 </div>
 
                 <div style={{ textAlign: 'center', marginTop: '2.5rem' }}>
@@ -135,6 +193,43 @@ const Introduction = () => {
                 <p>Get your Player ID in under a minute. The trails aren't going anywhere — but the leaderboard moves fast.</p>
                 <Link to="/join" className="it-btn it-btn-accent">Start playing <ArrowRight /></Link>
             </section>
+
+            {/* TRAIL DETAIL MODAL */}
+            {selectedTrail && (
+                <Modal isOpen={isOpen} onClose={close}>
+                    <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+                        <h2>{selectedTrail.title}</h2>
+                        <div
+                            style={{
+                                aspectRatio: '16/10',
+                                backgroundImage: `url(${getImagePath(selectedTrail.image)})`,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                                borderRadius: 'var(--it-radius)',
+                                marginBottom: '1.5rem',
+                                filter: 'blur(8px)'
+                            }}
+                        />
+                        <p><strong>Location:</strong> {selectedTrail.location}</p>
+                        <p><strong>Description:</strong> {selectedTrail.description}</p>
+                        <p><strong>Riddle:</strong></p>
+                        <p style={{ fontStyle: 'italic', color: 'var(--it-text-muted)' }}>{selectedTrail.riddle}</p>
+                        <p><strong>Coordinates:</strong> {selectedTrail.coordinates}</p>
+                        <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+                            <button
+                                className="it-btn it-btn-primary"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate('/play');
+                                }}
+                                style={{ cursor: 'pointer' }}
+                            >
+                                Try this trail
+                            </button>
+                        </div>
+                    </div>
+                </Modal>
+            )}
         </main>
     );
 };
