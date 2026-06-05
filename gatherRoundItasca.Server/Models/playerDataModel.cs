@@ -37,6 +37,15 @@ namespace gatherRoundItasca.Server.Models
         //PIN for login (hashed) with the get and set methods
         [Required]
         public string? PinHash { get; set; }
+
+        // Consecutive failed login attempts. Reset to 0 on a successful login.
+        // The PlayerId is public (it's the leaderboard name) so the 4-digit PIN
+        // is the only secret; brute force is mitigated by locking the account
+        // after too many wrong attempts. See docs/adr/0002.
+        public int FailedLoginAttempts { get; set; }
+
+        // When set and in the future, login is locked out until this time.
+        public DateTime? LockoutUntil { get; set; }
     }
 }
 

@@ -16,19 +16,20 @@ public class LeaderboardController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<object>>> GetAsync()
+    public async Task<ActionResult<IEnumerable<Models.LeaderboardModel>>> GetAsync()
     {
         var players = await _players.Find(Builders<Models.PlayerDataModel>.Filter.Empty)
             .SortByDescending(x => x.Points)
             .ThenBy(x => x.PlayerId)
             .ToListAsync();
 
-        var leaderboard = players.Select((player, index) => new
-        {
-            playerId = player.PlayerId,
-            ranking = index + 1,
-            locationsVisited = player.Points
-        });
+        // The Leaderboard is derived here, not stored: Rank is the player's
+        // 1-based position in the points-sorted list.
+        var leaderboard = players.Select((player, index) => new Models.LeaderboardModel(
+            player.PlayerId ?? string.Empty,
+            player.Points,
+            index + 1
+        ));
 
         return Ok(leaderboard);
     }

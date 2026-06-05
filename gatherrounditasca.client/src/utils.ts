@@ -1,22 +1,24 @@
 import { FORM_OPTIONS, GEO_PROXIMITY_THRESHOLD } from './constants';
 import { GeolocationCoordinates } from './types';
 
-export function generatePlayerId(
-  color: string,
-  food: string,
-  animal: string
-): string {
-  const random = Math.floor(1000 + Math.random() * 9000);
-  return `${color[0]}${food[0]}${animal[0]}${random}`.toUpperCase();
+// The PlayerId itself is minted by the server from the Favorites (and may carry a
+// numeric suffix on collision). This builds the unsuffixed *preview* the player
+// sees while choosing — the PascalCase concatenation, matching the server's base.
+function pascalize(value: string): string {
+  return value
+    .trim()
+    .split(/\s+/)
+    .map((word) => (word ? word[0].toUpperCase() + word.slice(1) : ''))
+    .join('');
 }
 
-export function getPlayerIdPreview(
+export function previewPlayerId(
   color: string,
   food: string,
   animal: string
 ): string {
   if (!color || !food || !animal) return '??????';
-  return generatePlayerId(color, food, animal);
+  return pascalize(color) + pascalize(food) + pascalize(animal);
 }
 
 export function calculateDistance(

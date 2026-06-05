@@ -1,74 +1,47 @@
 [
   {
-    "Email": "player1@example.com",
-    "FavoriteColor": null,
-    "FavoriteFood": null,
-    "FavoriteAnimal": null,
-    "PlayerId": "R1P2B3456",
-    "Points": 0,
-      "Place": 0
-  },
-  {
-    "Email": "player2@example.com",
-    "FavoriteColor": null,
-    "FavoriteFood": null,
-    "FavoriteAnimal": null,
-    "PlayerId": "B2G3Y7890",
-    "Points": 0,
-    "Place": 0
-  },
-  {
-    "Email": "astratt89@gmail.com",
-    "FavoriteColor": "",
-    "FavoriteFood": "",
-    "FavoriteAnimal": "",
-    "PlayerId": "UNDEFINEDUNDEFINEDUNDEFINED7670",
-    "Points": 0,
-    "Place": 0
-  },
-  {
+    "PlayerId": "GreenPastaBird",
     "Email": "astratt89@gmail.com",
     "FavoriteColor": "Green",
     "FavoriteFood": "Pasta",
     "FavoriteAnimal": "Bird",
-    "PlayerId": "GPB1342",
     "Points": 89,
-    "Place": 0
+    "PinHash": "$2a$11$C.UMP0SRvIEIwUHzaO95f./eDig3kWXhT6sTDPW5n0WMIKiy4JYRi"
   },
   {
-    "Email": "astratt89@gmail.com",
-    "FavoriteColor": "",
-    "FavoriteFood": "",
-    "FavoriteAnimal": "",
-    "PlayerId": "UNDEFINEDUNDEFINEDUNDEFINED8841",
-    "Points": 0,
-    "Place": 0
-  },
-  {
-    "Email": "astratt89@gmail.com",
-    "FavoriteColor": "Green",
-    "FavoriteFood": "Pasta",
-    "FavoriteAnimal": "Bird",
-    "PlayerId": "GPB4101",
-    "Points": 0,
-    "Place": 0
-  },
-  {
-    "Email": "astratt89@gmail.com",
+    "PlayerId": "YellowSushiBird",
+    "Email": "samira@example.com",
     "FavoriteColor": "Yellow",
     "FavoriteFood": "Sushi",
     "FavoriteAnimal": "Bird",
-    "PlayerId": "YSB5817",
-    "Points": 0,
-    "Place": 0
+    "Points": 120,
+    "PinHash": "$2a$11$C.UMP0SRvIEIwUHzaO95f./eDig3kWXhT6sTDPW5n0WMIKiy4JYRi"
   },
   {
-    "Email": "astratt89@gmail.com",
-    "FavoriteColor": "",
-    "FavoriteFood": "",
-    "FavoriteAnimal": "",
-    "PlayerId": "UNDEFINEDUNDEFINEDUNDEFINED2005",
-    "Points": 0,
-    "Place": 0
+    "PlayerId": "BluePizzaWolf",
+    "Email": "jordan@example.com",
+    "FavoriteColor": "Blue",
+    "FavoriteFood": "Pizza",
+    "FavoriteAnimal": "Wolf",
+    "Points": 200,
+    "PinHash": "$2a$11$C.UMP0SRvIEIwUHzaO95f./eDig3kWXhT6sTDPW5n0WMIKiy4JYRi"
+  },
+  {
+    "PlayerId": "RedCurryFox",
+    "Email": "alex@example.com",
+    "FavoriteColor": "Red",
+    "FavoriteFood": "Curry",
+    "FavoriteAnimal": "Fox",
+    "Points": 60,
+    "PinHash": "$2a$11$C.UMP0SRvIEIwUHzaO95f./eDig3kWXhT6sTDPW5n0WMIKiy4JYRi"
+  },
+  {
+    "PlayerId": "PinkBurgerTiger",
+    "Email": "taylor@example.com",
+    "FavoriteColor": "Pink",
+    "FavoriteFood": "Burger",
+    "FavoriteAnimal": "Tiger",
+    "Points": 15,
+    "PinHash": "$2a$11$C.UMP0SRvIEIwUHzaO95f./eDig3kWXhT6sTDPW5n0WMIKiy4JYRi"
   }
 ]

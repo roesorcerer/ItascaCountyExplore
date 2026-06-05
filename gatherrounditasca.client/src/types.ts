@@ -16,8 +16,8 @@ export type Trail = Location;
 
 export interface LeaderboardEntry {
   playerId: string;
-  ranking: number;
-  locationsVisited: number;
+  rank: number;
+  points: number;
 }
 
 export interface PlayerData {

@@ -1,0 +1,66 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build solution",
+      "type": "shell",
+      "command": "dotnet",
+      "args": [
+        "build",
+        "${workspaceFolder}/gatherRoundItasca.sln",
+        "/property:GenerateFullPaths=true",
+        "/p:Configuration=Debug",
+        "/p:Platform=AnyCPU"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "build server",
+      "type": "shell",
+      "command": "dotnet",
+      "args": [
+        "build",
+        "${workspaceFolder}/gatherRoundItasca.Server/gatherRoundItasca.Server.csproj",
+        "/property:GenerateFullPaths=true",
+        "/p:Configuration=Debug",
+        "/p:Platform=AnyCPU"
+      ],
+      "group": "build",
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "run server",
+      "type": "shell",
+      "command": "dotnet",
+      "args": [
+        "run",
+        "--project",
+        "${workspaceFolder}/gatherRoundItasca.Server/gatherRoundItasca.Server.csproj",
+        "--launch-profile",
+        "http"
+      ],
+      "isBackground": true,
+      "group": "none",
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "run client",
+      "type": "shell",
+      "command": "npm",
+      "args": [
+        "run",
+        "dev"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/gatherrounditasca.client"
+      },
+      "isBackground": true,
+      "group": "none",
+      "problemMatcher": "$msCompile"
+    }
+  ]
+}

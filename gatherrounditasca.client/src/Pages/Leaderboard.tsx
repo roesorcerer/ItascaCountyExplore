@@ -29,7 +29,7 @@ const RankingRow: React.FC<RankingRowProps> = ({ entry, isTopThree }) => (
       fontWeight: 900,
       color: isTopThree ? 'var(--it-primary)' : 'var(--it-text-muted)',
     }}>
-      #{entry.ranking}
+      #{entry.rank}
     </div>
 
     {/* Player ID */}
@@ -48,7 +48,7 @@ const RankingRow: React.FC<RankingRowProps> = ({ entry, isTopThree }) => (
     {/* Trails Found */}
     <div style={{ textAlign: 'right' }}>
       <div style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--it-primary)' }}>
-        {entry.locationsVisited}
+        {entry.points}
       </div>
       <p style={{ fontSize: '0.75rem', color: 'var(--it-text-muted)', margin: 0, fontWeight: 600 }}>
         trails

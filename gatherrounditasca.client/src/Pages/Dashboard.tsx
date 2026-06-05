@@ -23,8 +23,8 @@ const Dashboard: React.FC = () => {
   const userStats = useMemo(() => {
     const playerEntry = leaderboard?.find(entry => entry.playerId === user?.playerId);
     return {
-      ranking: playerEntry?.ranking || 0,
-      visited: playerEntry?.locationsVisited || 0,
+      rank: playerEntry?.rank || 0,
+      visited: playerEntry?.points || 0,
       total: locations?.length || 0,
     };
   }, [leaderboard, locations, user]);
@@ -72,7 +72,7 @@ const Dashboard: React.FC = () => {
                     Leaderboard Rank
                   </p>
                   <div style={{ fontSize: '2.5rem', fontWeight: 900, color: 'var(--it-text)' }}>
-                    {userStats.ranking > 0 ? `#${userStats.ranking}` : '—'}
+                    {userStats.rank > 0 ? `#${userStats.rank}` : '—'}
                   </div>
                 </div>
               </Card>

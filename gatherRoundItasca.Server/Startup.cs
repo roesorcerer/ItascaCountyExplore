@@ -58,7 +58,7 @@ namespace gatherRoundItasca.Server
                                       builder.WithOrigins(
                                                 "https://localhost:5173",
                                                 "http://localhost:5164",
-                                                "https://localhost:5165",
+                                                "https://localhost:5164",
                                                 "https://itascatrails.fly.dev"
                                              )
                                              .AllowAnyHeader()
@@ -78,6 +78,21 @@ namespace gatherRoundItasca.Server
             using (var scope = app.ApplicationServices.CreateScope())
             {
                 var services = scope.ServiceProvider;
+
+                // Schema setup (indexes/uniqueness) runs independently of data
+                // seeding so the email-uniqueness invariant holds even when there's
+                // nothing to seed or seed data is bad. See docs/adr/0002.
+                try
+                {
+                    services.GetRequiredService<MongoCollectionsService>()
+                        .EnsureIndexesAsync().GetAwaiter().GetResult();
+                    logger.LogInformation("Database indexes ensured.");
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Could not ensure database indexes. Uniqueness constraints may be missing until the database connection is fixed.");
+                }
+
                 try
                 {
                     var mongoSeedService = services.GetRequiredService<MongoSeedService>();

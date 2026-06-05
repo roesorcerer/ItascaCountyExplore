@@ -50,7 +50,7 @@ const Podium: React.FC<PodiumProps> = ({ entries }) => {
           <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', fontSize: '0.9rem', color: 'var(--it-text-muted)' }}>
             <div>
               <span style={{ display: 'block', fontSize: '1.5rem', fontWeight: 800, color: 'var(--it-text)' }}>
-                {top3[1].locationsVisited}
+                {top3[1].points}
               </span>
               trails found
             </div>
@@ -84,7 +84,7 @@ const Podium: React.FC<PodiumProps> = ({ entries }) => {
           <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', fontSize: '0.95rem' }}>
             <div>
               <span style={{ display: 'block', fontSize: '2rem', fontWeight: 900 }}>
-                {top3[0].locationsVisited}
+                {top3[0].points}
               </span>
               trails found
             </div>
@@ -114,7 +114,7 @@ const Podium: React.FC<PodiumProps> = ({ entries }) => {
           <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', fontSize: '0.9rem', color: 'var(--it-text-muted)' }}>
             <div>
               <span style={{ display: 'block', fontSize: '1.5rem', fontWeight: 800, color: 'var(--it-text)' }}>
-                {top3[2].locationsVisited}
+                {top3[2].points}
               </span>
               trails found
             </div>

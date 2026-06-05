@@ -5,7 +5,7 @@ import Footer from '../LayoutAssets/Footer';
 import { Button, Modal, SectionHead } from '../components';
 import { useModal } from '../hooks';
 import { useForm } from '../hooks/useForm';
-import { generatePlayerId, copyToClipboard } from '../utils';
+import { previewPlayerId, copyToClipboard } from '../utils';
 import { API_ENDPOINTS, MESSAGES, FORM_OPTIONS } from '../constants';
 import { toast } from 'react-toastify';
 import { useAuth } from '../contexts/AuthContext';
@@ -92,22 +92,29 @@ const FormField: React.FC<FormFieldProps> = ({
   </div>
 );
 
-// Retrieve section component
-interface RetrieveSectionProps {
-  onRetrieve: (email: string) => Promise<void>;
+// Recover section component — a Player who forgot their ID re-enters their three
+// favorites. If more than one Player shares them, an email field appears to break
+// the tie. (Recovery is by Favorites, not email — see docs/adr/0002.)
+interface RecoverSectionProps {
+  onRecover: (color: string, food: string, animal: string, email: string) => Promise<boolean>;
   loading: boolean;
 }
 
-const RetrieveSection: React.FC<RetrieveSectionProps> = ({ onRetrieve, loading }) => {
+const RecoverSection: React.FC<RecoverSectionProps> = ({ onRecover, loading }) => {
+  const [color, setColor] = React.useState('');
+  const [food, setFood] = React.useState('');
+  const [animal, setAnimal] = React.useState('');
   const [email, setEmail] = React.useState('');
+  const [needsEmail, setNeedsEmail] = React.useState(false);
 
-  const handleRetrieve = useCallback(async () => {
-    if (!email) {
-      toast.error('Enter your email');
+  const handleRecover = useCallback(async () => {
+    if (!color || !food || !animal) {
+      toast.error('Pick your favorite color, food and animal');
       return;
     }
-    await onRetrieve(email);
-  }, [email, onRetrieve]);
+    const ambiguous = await onRecover(color, food, animal, email);
+    setNeedsEmail(ambiguous);
+  }, [color, food, animal, email, onRecover]);
 
   return (
     <div style={{
@@ -116,27 +123,15 @@ const RetrieveSection: React.FC<RetrieveSectionProps> = ({ onRetrieve, loading }
       background: 'var(--it-bg-elev)',
       border: '1.5px solid var(--it-border)',
     }}>
-      <p style={{ fontWeight: 600, marginBottom: '1rem', fontSize: '0.95rem' }}>Retrieve your ID</p>
-      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-        <input
-          type="email"
-          placeholder="Enter your email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          disabled={loading}
-          style={{
-            flex: 1,
-            minWidth: '200px',
-            padding: '0.85rem 1rem',
-            borderRadius: 'var(--it-radius)',
-            border: '1.5px solid var(--it-border)',
-            background: 'var(--it-bg)',
-            color: 'var(--it-text)',
-            fontSize: '0.95rem',
-            boxSizing: 'border-box',
-          }}
-        />
-        <Button variant="ghost" onClick={handleRetrieve} loading={loading}>
+      <p style={{ fontWeight: 600, marginBottom: '1rem', fontSize: '0.95rem' }}>Recover your ID</p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <FormField label="🎨 Favorite color" type="select" value={color} onChange={setColor} options={[...FORM_OPTIONS.colors]} disabled={loading} />
+        <FormField label="🍽️ Favorite food" type="select" value={food} onChange={setFood} options={[...FORM_OPTIONS.foods]} disabled={loading} />
+        <FormField label="🦌 Favorite animal" type="select" value={animal} onChange={setAnimal} options={[...FORM_OPTIONS.animals]} disabled={loading} />
+        {needsEmail && (
+          <FormField label="✉️ Your email (to find the right account)" type="email" value={email} onChange={setEmail} placeholder="name@example.com" disabled={loading} />
+        )}
+        <Button variant="ghost" onClick={handleRecover} loading={loading}>
           Find it
         </Button>
       </div>
@@ -156,8 +151,8 @@ const Join: React.FC = () => {
     { email: '', color: '', food: '', animal: '', pin: '' },
     {
       onSubmit: async (values) => {
-        // Register player
-        const playerId = generatePlayerId(values.color, values.food, values.animal);
+        // The server mints the PlayerId from the favorites and returns it; the
+        // client never chooses it.
         const response = await fetch(API_ENDPOINTS.PLAYER_REGISTER, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -166,11 +161,14 @@ const Join: React.FC = () => {
             favoriteColor: values.color,
             favoriteFood: values.food,
             favoriteAnimal: values.animal,
-            playerId,
             pin: values.pin,
           }),
         });
-        if (!response.ok) throw new Error('Registration failed');
+        if (!response.ok) {
+          const data = await response.json().catch(() => null);
+          throw new Error(data?.message || 'Registration failed');
+        }
+        const { playerId } = await response.json();
         form.values.playerId = playerId;
 
         // Auto-login
@@ -184,14 +182,12 @@ const Join: React.FC = () => {
 
         open();
       },
-      onError: () => toast.error('Failed to register'),
+      onError: (err: Error) => toast.error(err.message || 'Failed to register'),
     }
   );
 
   const previewId = useMemo(
-    () => form.values.color && form.values.food && form.values.animal
-      ? generatePlayerId(form.values.color, form.values.food, form.values.animal)
-      : '??????',
+    () => previewPlayerId(form.values.color, form.values.food, form.values.animal),
     [form.values]
   );
 
@@ -207,19 +203,34 @@ const Join: React.FC = () => {
     return true;
   }, [form.values]);
 
-  const handleRetrieve = useCallback(async (email: string) => {
+  // Returns true when the favorites matched more than one Player and an email is
+  // needed to disambiguate.
+  const handleRecover = useCallback(async (color: string, food: string, animal: string, email: string): Promise<boolean> => {
     setRetrieveLoading(true);
     try {
-      const response = await fetch(`${API_ENDPOINTS.PLAYER_RETRIEVE}?email=${encodeURIComponent(email)}`);
-      if (!response.ok) throw new Error('Not found');
+      const response = await fetch(API_ENDPOINTS.PLAYER_RECOVER, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ favoriteColor: color, favoriteFood: food, favoriteAnimal: animal, email: email || undefined }),
+      });
+      if (!response.ok) {
+        toast.error(MESSAGES.ERROR.PLAYER_NOT_FOUND);
+        return false;
+      }
       const data = await response.json();
-      if (data?.PlayerId) {
-        form.values.playerId = data.PlayerId;
+      if (data?.needsEmail) {
+        toast.info(MESSAGES.ERROR.RECOVERY_NEEDS_EMAIL);
+        return true;
+      }
+      if (data?.playerId) {
+        form.values.playerId = data.playerId;
         open();
         toast.success(MESSAGES.SUCCESS.PLAYER_FOUND);
       }
+      return false;
     } catch {
       toast.error(MESSAGES.ERROR.PLAYER_NOT_FOUND);
+      return false;
     } finally {
       setRetrieveLoading(false);
     }
@@ -350,12 +361,12 @@ const Join: React.FC = () => {
               color: 'var(--it-text-muted)',
             }}>
               <div style={{ flex: 1, height: '1px', background: 'var(--it-border)' }} />
-              <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Already have a Player ID?</span>
+              <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Forgot your Player ID?</span>
               <div style={{ flex: 1, height: '1px', background: 'var(--it-border)' }} />
             </div>
 
-            {/* Retrieve section */}
-            <RetrieveSection onRetrieve={handleRetrieve} loading={retrieveLoading} />
+            {/* Recover section */}
+            <RecoverSection onRecover={handleRecover} loading={retrieveLoading} />
           </div>
         </section>
       </main>

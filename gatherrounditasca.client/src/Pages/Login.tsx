@@ -29,32 +29,26 @@ const Login: React.FC = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(`${API_ENDPOINTS.PLAYER_RETRIEVE_ID}?playerID=${playerId}`);
-      if (!response.ok) {
-        toast.error(MESSAGES.ERROR.INVALID_PLAYER_ID);
-        return;
-      }
-
-      const userData = await response.json();
-
-      // Verify PIN (backend should handle this)
-      const loginResponse = await fetch('/api/player/login', {
+      const response = await fetch(API_ENDPOINTS.PLAYER_LOGIN, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ playerId, pin }),
       });
 
-      if (!loginResponse.ok) {
-        toast.error('Invalid PIN');
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        // 423 Locked: account temporarily locked after too many wrong PINs.
+        toast.error(data?.message || MESSAGES.ERROR.INVALID_PLAYER_ID);
         return;
       }
 
+      const { player } = await response.json();
       login({
-        playerId: userData.PlayerId,
-        email: userData.Email || '',
-        favoriteColor: userData.FavoriteColor || '',
-        favoriteFood: userData.FavoriteFood || '',
-        favoriteAnimal: userData.FavoriteAnimal || '',
+        playerId: player.playerId,
+        email: player.email || '',
+        favoriteColor: player.favoriteColor || '',
+        favoriteFood: player.favoriteFood || '',
+        favoriteAnimal: player.favoriteAnimal || '',
       });
 
       toast.success('Welcome back!');
@@ -88,8 +82,8 @@ const Login: React.FC = () => {
                 <input
                   type="text"
                   value={playerId}
-                  onChange={(e) => setPlayerId(e.target.value.toUpperCase())}
-                  placeholder="e.g., RPI1234"
+                  onChange={(e) => setPlayerId(e.target.value)}
+                  placeholder="e.g., PurpleTacosOtter"
                   disabled={loading}
                   style={{
                     width: '100%',
@@ -100,8 +94,7 @@ const Login: React.FC = () => {
                     color: 'var(--it-text)',
                     fontSize: '1rem',
                     fontWeight: 600,
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
                     boxSizing: 'border-box',
                   }}
                 />

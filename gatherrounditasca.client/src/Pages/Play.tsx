@@ -125,9 +125,9 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ onCheckIn, loading, defaultPl
                 </label>
                 <input
                     type="text"
-                    placeholder="e.g., RPS1847"
+                    placeholder="e.g., PurpleTacosOtter"
                     value={playerId}
-                    onChange={(e) => setPlayerId(e.target.value.toUpperCase())}
+                    onChange={(e) => setPlayerId(e.target.value)}
                     disabled={loading}
                     style={{
                         width: '100%',
@@ -138,9 +138,8 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ onCheckIn, loading, defaultPl
                         color: 'var(--it-text)',
                         fontSize: '1rem',
                         fontWeight: 600,
-                        letterSpacing: '0.08em',
+                        letterSpacing: '0.04em',
                         boxSizing: 'border-box',
-                        textTransform: 'uppercase',
                     }}
                 />
                 <p style={{ fontSize: '0.75rem', color: 'var(--it-text-muted)', margin: '0.5rem 0 0' }}>
