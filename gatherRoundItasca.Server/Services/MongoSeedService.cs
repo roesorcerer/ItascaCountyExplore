@@ -25,6 +25,56 @@ namespace gatherRoundItasca.Server.Services
             await SeedLocationsAsync();
             await SeedPlayersAsync();
             await SeedUpdatesAsync();
+            await MigrateTrailsAndStopsAsync();
+        }
+
+        // Migrates the legacy `locations` collection into the Trail / Stop model of
+        // docs/adr/0004: each location becomes the Trailhead (Order = 1) of its own
+        // new Trail — N single-Stop Trails, not one shared Trail. Run-once and
+        // idempotent: if any Trail already exists, this is a no-op. The `locations`
+        // collection is left intact as the source; the app reads trails/stops now.
+        private async Task MigrateTrailsAndStopsAsync()
+        {
+            var trailsExist = await _collections.Trails.Find(Builders<TrailModel>.Filter.Empty).AnyAsync();
+            if (trailsExist)
+            {
+                return;
+            }
+
+            var locations = await _collections.Locations.Find(Builders<LocationModel>.Filter.Empty).ToListAsync();
+            if (locations.Count == 0)
+            {
+                return;
+            }
+
+            foreach (var location in locations)
+            {
+                var trail = new TrailModel
+                {
+                    Name = location.Title,
+                    Description = location.Description,
+                    Region = location.Location,
+                    CoverImage = location.Image,
+                    Url = location.Url,
+                    Date = location.Date,
+                    LegacyLocationId = location.Id
+                };
+                await _collections.Trails.InsertOneAsync(trail);
+
+                var stop = new StopModel
+                {
+                    TrailId = trail.Id,
+                    Order = 1,
+                    Points = StopModel.DefaultPoints,
+                    Title = location.Title,
+                    Riddle = location.Riddle,
+                    Coordinates = location.Coordinates,
+                    Image = location.Image
+                };
+                await _collections.Stops.InsertOneAsync(stop);
+            }
+
+            _logger.LogInformation("Migrated {Count} locations into trails + Order-1 stops.", locations.Count);
         }
 
         private async Task SeedLocationsAsync()

@@ -149,14 +149,14 @@ const Introduction = () => {
                                 <div
                                     className="it-card__img"
                                     style={{
-                                        backgroundImage: failedImages.has(String(f.id)) ? 'none' : `url(${getImagePath(f.image)})`,
+                                        backgroundImage: failedImages.has(String(f.id)) ? 'none' : `url(${getImagePath(f.coverImage)})`,
                                         backgroundColor: failedImages.has(String(f.id)) ? 'var(--it-bg-muted)' : 'transparent',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center'
                                     }}
                                     role="img"
-                                    aria-label={f.title}
+                                    aria-label={f.name}
                                 >
                                     {failedImages.has(String(f.id)) && (
                                         <span style={{ color: 'var(--it-text-muted)', fontSize: '0.9rem', textAlign: 'center', padding: '1rem' }}>
@@ -164,15 +164,15 @@ const Introduction = () => {
                                         </span>
                                     )}
                                     <img
-                                        src={getImagePath(f.image)}
+                                        src={getImagePath(f.coverImage)}
                                         style={{ display: 'none' }}
                                         onError={() => handleImageError(String(f.id))}
                                         alt=""
                                     />
                                 </div>
                                 <div className="it-card__body">
-                                    <span className="it-card__tag">{f.location}</span>
-                                    <h4>{f.title}</h4>
+                                    <span className="it-card__tag">{f.region}</span>
+                                    <h4>{f.name}</h4>
                                     <p>{f.description}</p>
                                 </div>
                             </article>
@@ -198,11 +198,11 @@ const Introduction = () => {
             {selectedTrail && (
                 <Modal isOpen={isOpen} onClose={close}>
                     <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-                        <h2>{selectedTrail.title}</h2>
+                        <h2>{selectedTrail.name}</h2>
                         <div
                             style={{
                                 aspectRatio: '16/10',
-                                backgroundImage: `url(${getImagePath(selectedTrail.image)})`,
+                                backgroundImage: `url(${getImagePath(selectedTrail.coverImage)})`,
                                 backgroundSize: 'cover',
                                 backgroundPosition: 'center',
                                 borderRadius: 'var(--it-radius)',
@@ -210,11 +210,11 @@ const Introduction = () => {
                                 filter: 'blur(8px)'
                             }}
                         />
-                        <p><strong>Location:</strong> {selectedTrail.location}</p>
+                        <p><strong>Location:</strong> {selectedTrail.region}</p>
                         <p><strong>Description:</strong> {selectedTrail.description}</p>
-                        <p><strong>Riddle:</strong></p>
-                        <p style={{ fontStyle: 'italic', color: 'var(--it-text-muted)' }}>{selectedTrail.riddle}</p>
-                        <p><strong>Coordinates:</strong> {selectedTrail.coordinates}</p>
+                        <p style={{ color: 'var(--it-text-muted)' }}>
+                            {selectedTrail.stopCount} {selectedTrail.stopCount === 1 ? 'stop' : 'stops'} to discover. Head to Play to see the first riddle.
+                        </p>
                         <div style={{ marginTop: '2rem', textAlign: 'center' }}>
                             <button
                                 className="it-btn it-btn-primary"

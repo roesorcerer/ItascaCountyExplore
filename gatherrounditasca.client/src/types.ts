@@ -1,18 +1,57 @@
 export type Theme = 'light' | 'dark';
 
-export interface Location {
+// Trail / Stop / Check-in model — see docs/adr/0004. A Trail is the curated
+// wrapper; its Stops live separately and are revealed one at a time as the Player
+// checks in.
+export interface Trail {
   id: string;
-  date: string;
-  location: string;
-  image: string;
-  url: string;
-  title: string;
+  name: string;
   description: string;
-  coordinates: string;
-  riddle: string;
+  region: string;
+  coverImage: string;
+  stopCount: number;
 }
 
-export type Trail = Location;
+export interface Stop {
+  id: string;
+  trailId: string;
+  order: number;
+  points: number;
+  title: string;
+  riddle: string;
+  coordinates: string;
+  image?: string | null;
+}
+
+export interface CompletedStop {
+  id: string;
+  order: number;
+  title: string;
+}
+
+// A Trail as seen by one Player: progress plus the single revealed current Stop.
+export interface TrailDetail {
+  id: string;
+  name: string;
+  description: string;
+  region: string;
+  coverImage: string;
+  completed: number;
+  total: number;
+  trailComplete: boolean;
+  currentStop: Stop | null;
+  completedStops: CompletedStop[];
+}
+
+// Result of POST /api/checkin.
+export interface CheckinResult {
+  awarded: number;
+  totalPoints: number;
+  completed: number;
+  total: number;
+  trailComplete: boolean;
+  nextStop: Stop | null;
+}
 
 export interface LeaderboardEntry {
   playerId: string;

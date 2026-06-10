@@ -1,27 +1,47 @@
 import "../assets/css/BackendStyle.css";
 import { FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_ENDPOINTS, STORAGE_KEYS } from '../constants';
 
+// The Admin is a distinct actor authenticated by a real username + password against
+// the server (no longer a hardcoded client-side check). A successful login returns a
+// bearer token that gates every /admin/* call. See docs/adr/0003.
 const LoginPage = () => {
     const navigate = useNavigate();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    // Hardcoded credentials for demonstration purposes
-    const hardcodedUsername = 'adminUser';
-    const hardcodedPassword = 'adminPass';
-
-    const handleLogin = (e: FormEvent) => {
+    const handleLogin = async (e: FormEvent) => {
         e.preventDefault();
-        // Here you would handle authentication.
-        // This example just redirects to the admin page if the username and password are filled.
-        if (username === hardcodedUsername && password === hardcodedPassword) {
-            console.log('Login Successful');
-            sessionStorage.setItem('adminAuthenticated', 'true');
-            navigate('/admin'); // Redirect to admin page upon successful login // Redirect to admin page upon successful login
-        } else {
-            console.log('Login Failed: Username or password missing');
-            alert('Login failed: Incorrect username or password');
+
+        if (!username.trim() || !password) {
+            alert('Enter your username and password');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const response = await fetch(API_ENDPOINTS.ADMIN_LOGIN, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password }),
+            });
+
+            if (!response.ok) {
+                const data = await response.json().catch(() => null);
+                alert(data?.message || 'Login failed: incorrect username or password');
+                return;
+            }
+
+            const { token } = await response.json();
+            sessionStorage.setItem(STORAGE_KEYS.ADMIN_TOKEN, token);
+            navigate('/admin');
+        } catch (error) {
+            console.error(error);
+            alert('Login failed. Please try again.');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -33,7 +53,7 @@ const LoginPage = () => {
                         <div className="form-input-content">
                             <div className="card login-form mb-0">
                                 <div className="card-body pt-5">
-                                    {/* Title */} 
+                                    {/* Title */}
                                     <span className="text-center">Secret Admin Login </span>
 
                                     {/* Login form */ }
@@ -56,7 +76,7 @@ const LoginPage = () => {
                         onChange={(e) => setPassword(e.target.value)}
                     />
                 </div>
-                <button type="submit">Login</button>
+                <button type="submit" disabled={loading}>{loading ? 'Logging in…' : 'Login'}</button>
                                     </form>
                                 </div>
                             </div>

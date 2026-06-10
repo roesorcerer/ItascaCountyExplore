@@ -5,13 +5,16 @@ export const API_BASE = import.meta.env.VITE_API_BASE || '/api';
 
 export const API_ENDPOINTS = {
   LOCATIONS: `${API_BASE}/locations`,
-  TRAILS: `${API_BASE}/admin/trails`,
+  // Public Trail read path (docs/adr/0004). Detail: `${TRAILS}/${trailId}?playerId=`.
+  TRAILS: `${API_BASE}/trails`,
+  CHECKIN: `${API_BASE}/checkin`,
   LEADERBOARD: `${API_BASE}/leaderboard`,
   PLAYER_REGISTER: '/api/player/register',
   PLAYER_LOGIN: '/api/player/login',
   PLAYER_RECOVER: '/api/player/recover',
   PLAYER_RETRIEVE_ID: `${API_BASE}/Player/retrieveID`,
   UPDATES: `${API_BASE}/updates`,
+  ADMIN_LOGIN: `${API_BASE}/admin/login`,
 } as const;
 
 // Form options
@@ -27,12 +30,18 @@ export const GEO_PROXIMITY_THRESHOLD = 0.01;
 // Storage keys
 export const STORAGE_KEYS = {
   THEME: 'itasca-theme',
+  // Admin bearer token (sessionStorage). The Admin is a distinct actor; this token
+  // gates every /admin/* call. See docs/adr/0003.
+  ADMIN_TOKEN: 'adminToken',
 } as const;
 
 // Messages
 export const MESSAGES = {
   SUCCESS: {
     CHECKED_IN: '🎉 Correct! Points added to your score.',
+    CHECKED_IN_POINTS: (points: number) => `🎉 Checked in! +${points} points.`,
+    ALREADY_CHECKED_IN: 'You already checked in here.',
+    TRAIL_COMPLETE: '🏆 Trail complete! Nice work.',
     COPIED: 'Copied to clipboard!',
     PLAYER_FOUND: 'Player ID retrieved successfully.',
   },

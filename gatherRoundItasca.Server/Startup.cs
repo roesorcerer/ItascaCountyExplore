@@ -37,7 +37,12 @@ namespace gatherRoundItasca.Server
             services.AddSingleton(sp =>
                 sp.GetRequiredService<IMongoClient>().GetDatabase(mongoDatabaseName));
             services.AddSingleton<MongoCollectionsService>();
+            // Derives Player progress / the current Stop from the checkins log. See docs/adr/0004.
+            services.AddSingleton<TrailProgressService>();
             services.AddScoped<MongoSeedService>();
+            // Issues/validates the Admin bearer token used to gate /admin/*.
+            // See docs/adr/0003.
+            services.AddSingleton<AdminTokenService>();
 
             // Add MVC controllers to the service collection
             services.AddControllers();
@@ -91,6 +96,33 @@ namespace gatherRoundItasca.Server
                 catch (Exception ex)
                 {
                     logger.LogWarning(ex, "Could not ensure database indexes. Uniqueness constraints may be missing until the database connection is fixed.");
+                }
+
+                // Seed the single Admin account from configuration (Admin:Username /
+                // Admin:Password, env vars in deployment). Created once if absent and
+                // never overwritten — rotating the password is a deliberate DB op.
+                // See docs/adr/0003.
+                try
+                {
+                    var adminUsername = Configuration["Admin:Username"]
+                        ?? Environment.GetEnvironmentVariable("ADMIN_USERNAME");
+                    var adminPassword = Configuration["Admin:Password"]
+                        ?? Environment.GetEnvironmentVariable("ADMIN_PASSWORD");
+
+                    if (string.IsNullOrWhiteSpace(adminUsername) || string.IsNullOrWhiteSpace(adminPassword))
+                    {
+                        logger.LogWarning("Admin credentials not configured (Admin:Username / Admin:Password). No Admin account was seeded; the admin dashboard will be unreachable until one is set.");
+                    }
+                    else
+                    {
+                        services.GetRequiredService<MongoCollectionsService>()
+                            .EnsureAdminAsync(adminUsername, adminPassword).GetAwaiter().GetResult();
+                        logger.LogInformation("Admin account ensured.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Could not ensure the Admin account. The admin dashboard may be unreachable until the database connection is fixed.");
                 }
 
                 try

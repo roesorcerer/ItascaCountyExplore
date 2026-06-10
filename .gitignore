@@ -405,4 +405,9 @@ CONTEXT.md
 .gitignore
 gatherRoundItasca.Server/Data/bestitascalocations.json
 gatherrounditasca.client/.env.example
-.deb
+
+.env
+Dockerfile
+docker-compose.yml
+fly.toml
+.config

@@ -6,12 +6,12 @@ import { Button, SectionHead, Card } from '../components';
 import { useAuth } from '../contexts/AuthContext';
 import { useFetch } from '../hooks';
 import { API_ENDPOINTS } from '../constants';
-import { Location, LeaderboardEntry } from '../types';
+import { Trail, LeaderboardEntry } from '../types';
 
 const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const { data: locations } = useFetch<Location[]>(API_ENDPOINTS.LOCATIONS);
+  const { data: trails } = useFetch<Trail[]>(API_ENDPOINTS.TRAILS);
   const { data: leaderboard } = useFetch<LeaderboardEntry[]>(API_ENDPOINTS.LEADERBOARD);
 
   React.useEffect(() => {
@@ -25,9 +25,9 @@ const Dashboard: React.FC = () => {
     return {
       rank: playerEntry?.rank || 0,
       visited: playerEntry?.points || 0,
-      total: locations?.length || 0,
+      total: trails?.length || 0,
     };
-  }, [leaderboard, locations, user]);
+  }, [leaderboard, trails, user]);
 
   const handleLogout = () => {
     logout();

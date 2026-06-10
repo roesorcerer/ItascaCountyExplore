@@ -1,20 +1,32 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../LayoutAssets/Header';
 import Footer from '../LayoutAssets/Footer';
+import { STORAGE_KEYS } from '../constants';
 
 type TabKey = 'dashboard' | 'trails' | 'updates' | 'users' | 'leaderboard';
 
+// A Trail is the curated wrapper; its Stops are managed separately. See docs/adr/0004.
 interface Trail {
-    id: number;
-    date: string;
-    location: string;
-    image: string;
-    url: string;
-    title: string;
+    id: string;
+    name: string;
     description: string;
-    coordinates: string;
+    region: string;
+    coverImage: string;
+    url: string;
+    date: string;
+    legacyLocationId?: number;
+}
+
+interface Stop {
+    id: string;
+    trailId: string;
+    order: number;
+    points: number;
+    title: string;
     riddle: string;
+    coordinates: string;
+    image: string;
     visitCount: number;
 }
 
@@ -45,21 +57,30 @@ interface DashboardData {
     totalTrails: number;
     totalUsers: number;
     totalUpdates: number;
-    popularTrails: Array<{ id: number; title: string; location: string; visitCount: number }>;
+    popularTrails: Array<{ id: string; title: string; location: string; visitCount: number }>;
     leaderboard: LeaderboardItem[];
     latestUpdates: Array<{ updateNumber: number; date: string; locationUpdate: string; leaderboardUpdate: string }>;
 }
 
 const emptyTrail: Trail = {
-    id: 0,
-    date: '',
-    location: '',
-    image: '',
-    url: '',
-    title: '',
+    id: '',
+    name: '',
     description: '',
-    coordinates: '',
+    region: '',
+    coverImage: '',
+    url: '',
+    date: '',
+};
+
+const emptyStop: Stop = {
+    id: '',
+    trailId: '',
+    order: 1,
+    points: 10,
+    title: '',
     riddle: '',
+    coordinates: '',
+    image: '',
     visitCount: 0,
 };
 
@@ -93,7 +114,13 @@ function AdminPage() {
     const [leaderboard, setLeaderboard] = useState<LeaderboardItem[]>([]);
 
     const [trailForm, setTrailForm] = useState<Trail>(emptyTrail);
-    const [editingTrailId, setEditingTrailId] = useState<number | null>(null);
+    const [editingTrailId, setEditingTrailId] = useState<string | null>(null);
+
+    // When set, the Trails tab shows the Stop manager for this Trail.
+    const [stopsTrail, setStopsTrail] = useState<Trail | null>(null);
+    const [stops, setStops] = useState<Stop[]>([]);
+    const [stopForm, setStopForm] = useState<Stop>(emptyStop);
+    const [editingStopId, setEditingStopId] = useState<string | null>(null);
 
     const [updateForm, setUpdateForm] = useState<UpdateItem>(emptyUpdate);
     const [editingUpdateNumber, setEditingUpdateNumber] = useState<number | null>(null);
@@ -103,9 +130,30 @@ function AdminPage() {
 
     const topTrailName = useMemo(() => dashboard?.popularTrails?.[0]?.title ?? 'N/A', [dashboard]);
 
+    // Every /admin/* call carries the Admin bearer token. A 401 means the token is
+    // missing or expired, so drop it and send the Admin back to login. See
+    // docs/adr/0003.
+    const authedFetch = useCallback(async (input: string, init: RequestInit = {}) => {
+        const token = sessionStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
+        const response = await fetch(input, {
+            ...init,
+            headers: {
+                ...(init.headers ?? {}),
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+        });
+
+        if (response.status === 401) {
+            sessionStorage.removeItem(STORAGE_KEYS.ADMIN_TOKEN);
+            navigate('/login');
+        }
+
+        return response;
+    }, [navigate]);
+
     useEffect(() => {
-        const isAuthenticated = sessionStorage.getItem('adminAuthenticated') === 'true';
-        if (!isAuthenticated) {
+        const token = sessionStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
+        if (!token) {
             navigate('/login');
             return;
         }
@@ -118,28 +166,22 @@ function AdminPage() {
         setError('');
         try {
             const [dashboardRes, trailsRes, updatesRes, usersRes, leaderboardRes] = await Promise.all([
-                fetch('/api/admin/dashboard'),
-                fetch('/api/admin/trails'),
-                fetch('/api/admin/updates'),
-                fetch('/api/admin/users'),
-                fetch('/api/admin/leaderboard'),
+                authedFetch('/api/admin/dashboard'),
+                authedFetch('/api/admin/trails'),
+                authedFetch('/api/admin/updates'),
+                authedFetch('/api/admin/users'),
+                authedFetch('/api/admin/leaderboard'),
             ]);
 
             if (!dashboardRes.ok || !trailsRes.ok || !updatesRes.ok || !usersRes.ok || !leaderboardRes.ok) {
                 throw new Error('Failed to load one or more admin resources.');
             }
 
-            const dashboardData = (await dashboardRes.json()) as DashboardData;
-            const trailData = (await trailsRes.json()) as Trail[];
-            const updateData = (await updatesRes.json()) as UpdateItem[];
-            const userData = (await usersRes.json()) as UserItem[];
-            const leaderboardData = (await leaderboardRes.json()) as LeaderboardItem[];
-
-            setDashboard(dashboardData);
-            setTrails(trailData);
-            setUpdates(updateData);
-            setUsers(userData);
-            setLeaderboard(leaderboardData);
+            setDashboard((await dashboardRes.json()) as DashboardData);
+            setTrails((await trailsRes.json()) as Trail[]);
+            setUpdates((await updatesRes.json()) as UpdateItem[]);
+            setUsers((await usersRes.json()) as UserItem[]);
+            setLeaderboard((await leaderboardRes.json()) as LeaderboardItem[]);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Unknown error occurred.';
             setError(message);
@@ -149,9 +191,11 @@ function AdminPage() {
     };
 
     const logout = () => {
-        sessionStorage.removeItem('adminAuthenticated');
+        sessionStorage.removeItem(STORAGE_KEYS.ADMIN_TOKEN);
         navigate('/login');
     };
+
+    // ----- Trails -----
 
     const onTrailSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -159,15 +203,14 @@ function AdminPage() {
         const url = editingTrailId === null ? '/api/admin/trails' : `/api/admin/trails/${editingTrailId}`;
         const method = editingTrailId === null ? 'POST' : 'PUT';
 
-        const response = await fetch(url, {
+        const response = await authedFetch(url, {
             method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(trailForm),
         });
 
         if (!response.ok) {
-            const text = await response.text();
-            setError(`Trail save failed: ${text}`);
+            setError(`Trail save failed: ${await response.text()}`);
             return;
         }
 
@@ -182,18 +225,88 @@ function AdminPage() {
         setActiveTab('trails');
     };
 
-    const deleteTrail = async (id: number) => {
-        if (!confirm(`Delete trail #${id}?`)) return;
+    const deleteTrail = async (trail: Trail) => {
+        if (!confirm(`Delete trail "${trail.name}" and all its stops?`)) return;
 
-        const response = await fetch(`/api/admin/trails/${id}`, { method: 'DELETE' });
+        const response = await authedFetch(`/api/admin/trails/${trail.id}`, { method: 'DELETE' });
         if (!response.ok) {
-            const text = await response.text();
-            setError(`Trail delete failed: ${text}`);
+            setError(`Trail delete failed: ${await response.text()}`);
             return;
         }
 
         await loadAllData();
     };
+
+    // ----- Stops -----
+
+    const loadStops = useCallback(async (trailId: string) => {
+        const response = await authedFetch(`/api/admin/trails/${trailId}/stops`);
+        if (!response.ok) {
+            setError(`Failed to load stops: ${await response.text()}`);
+            return;
+        }
+        setStops((await response.json()) as Stop[]);
+    }, [authedFetch]);
+
+    const manageStops = async (trail: Trail) => {
+        setStopsTrail(trail);
+        setStopForm({ ...emptyStop, order: 1 });
+        setEditingStopId(null);
+        setActiveTab('trails');
+        await loadStops(trail.id);
+    };
+
+    const closeStops = () => {
+        setStopsTrail(null);
+        setStops([]);
+        setStopForm(emptyStop);
+        setEditingStopId(null);
+    };
+
+    const onStopSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!stopsTrail) return;
+
+        const url = editingStopId === null
+            ? `/api/admin/trails/${stopsTrail.id}/stops`
+            : `/api/admin/stops/${editingStopId}`;
+        const method = editingStopId === null ? 'POST' : 'PUT';
+
+        const response = await authedFetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(stopForm),
+        });
+
+        if (!response.ok) {
+            setError(`Stop save failed: ${await response.text()}`);
+            return;
+        }
+
+        setStopForm({ ...emptyStop, order: stops.length + 1 });
+        setEditingStopId(null);
+        await loadStops(stopsTrail.id);
+    };
+
+    const editStop = (stop: Stop) => {
+        setStopForm(stop);
+        setEditingStopId(stop.id);
+    };
+
+    const deleteStop = async (stop: Stop) => {
+        if (!stopsTrail) return;
+        if (!confirm(`Delete stop #${stop.order} "${stop.title}"?`)) return;
+
+        const response = await authedFetch(`/api/admin/stops/${stop.id}`, { method: 'DELETE' });
+        if (!response.ok) {
+            setError(`Stop delete failed: ${await response.text()}`);
+            return;
+        }
+
+        await loadStops(stopsTrail.id);
+    };
+
+    // ----- Updates -----
 
     const onUpdateSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -203,15 +316,14 @@ function AdminPage() {
             : `/api/admin/updates/${editingUpdateNumber}`;
         const method = editingUpdateNumber === null ? 'POST' : 'PUT';
 
-        const response = await fetch(url, {
+        const response = await authedFetch(url, {
             method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(updateForm),
         });
 
         if (!response.ok) {
-            const text = await response.text();
-            setError(`Update save failed: ${text}`);
+            setError(`Update save failed: ${await response.text()}`);
             return;
         }
 
@@ -229,15 +341,16 @@ function AdminPage() {
     const deleteUpdate = async (updateNumber: number) => {
         if (!confirm(`Delete update #${updateNumber}?`)) return;
 
-        const response = await fetch(`/api/admin/updates/${updateNumber}`, { method: 'DELETE' });
+        const response = await authedFetch(`/api/admin/updates/${updateNumber}`, { method: 'DELETE' });
         if (!response.ok) {
-            const text = await response.text();
-            setError(`Update delete failed: ${text}`);
+            setError(`Update delete failed: ${await response.text()}`);
             return;
         }
 
         await loadAllData();
     };
+
+    // ----- Users -----
 
     const editUser = (user: UserItem) => {
         setUserForm(user);
@@ -253,15 +366,14 @@ function AdminPage() {
             return;
         }
 
-        const response = await fetch(`/api/admin/users/${encodeURIComponent(editingUserId)}`, {
+        const response = await authedFetch(`/api/admin/users/${encodeURIComponent(editingUserId)}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(userForm),
         });
 
         if (!response.ok) {
-            const text = await response.text();
-            setError(`User update failed: ${text}`);
+            setError(`User update failed: ${await response.text()}`);
             return;
         }
 
@@ -273,13 +385,12 @@ function AdminPage() {
     const deleteUser = async (playerId: string) => {
         if (!confirm(`Delete user ${playerId}?`)) return;
 
-        const response = await fetch(`/api/admin/users/${encodeURIComponent(playerId)}`, {
+        const response = await authedFetch(`/api/admin/users/${encodeURIComponent(playerId)}`, {
             method: 'DELETE',
         });
 
         if (!response.ok) {
-            const text = await response.text();
-            setError(`User delete failed: ${text}`);
+            setError(`User delete failed: ${await response.text()}`);
             return;
         }
 
@@ -326,66 +437,123 @@ function AdminPage() {
         </div>
     );
 
-    const renderTrails = () => (
-        <div className="row g-4">
-            <div className="col-lg-5">
-                <div className="card p-3">
-                    <h5>{editingTrailId === null ? 'Add New Trail Information' : `Edit Trail #${editingTrailId}`}</h5>
-                    <form onSubmit={onTrailSubmit}>
-                        <input className="form-control mb-2" placeholder="Id" type="number" value={trailForm.id}
-                            disabled={editingTrailId !== null}
-                            onChange={(e) => setTrailForm({ ...trailForm, id: Number(e.target.value) })} required />
-                        <input className="form-control mb-2" placeholder="Date" value={trailForm.date}
-                            onChange={(e) => setTrailForm({ ...trailForm, date: e.target.value })} required />
-                        <input className="form-control mb-2" placeholder="Location" value={trailForm.location}
-                            onChange={(e) => setTrailForm({ ...trailForm, location: e.target.value })} required />
-                        <input className="form-control mb-2" placeholder="Title" value={trailForm.title}
-                            onChange={(e) => setTrailForm({ ...trailForm, title: e.target.value })} required />
-                        <input className="form-control mb-2" placeholder="Image URL" value={trailForm.image}
-                            onChange={(e) => setTrailForm({ ...trailForm, image: e.target.value })} required />
-                        <input className="form-control mb-2" placeholder="Trail URL" value={trailForm.url}
-                            onChange={(e) => setTrailForm({ ...trailForm, url: e.target.value })} required />
-                        <input className="form-control mb-2" placeholder="Coordinates" value={trailForm.coordinates}
-                            onChange={(e) => setTrailForm({ ...trailForm, coordinates: e.target.value })} required />
-                        <textarea className="form-control mb-2" placeholder="Description" value={trailForm.description}
-                            onChange={(e) => setTrailForm({ ...trailForm, description: e.target.value })} required />
-                        <textarea className="form-control mb-2" placeholder="Riddle" value={trailForm.riddle}
-                            onChange={(e) => setTrailForm({ ...trailForm, riddle: e.target.value })} required />
-                        <input className="form-control mb-3" placeholder="Visit Count" type="number" min={0}
-                            value={trailForm.visitCount}
-                            onChange={(e) => setTrailForm({ ...trailForm, visitCount: Number(e.target.value) })} />
-
-                        <button className="btn btn-primary me-2" type="submit">{editingTrailId === null ? 'Add Trail' : 'Save Trail'}</button>
-                        <button className="btn btn-outline-secondary" type="button" onClick={() => { setTrailForm(emptyTrail); setEditingTrailId(null); }}>Clear</button>
-                    </form>
-                </div>
+    const renderStops = (trail: Trail) => (
+        <div>
+            <div className="d-flex justify-content-between align-items-center mb-3">
+                <h5 className="mb-0">Stops on "{trail.name}"</h5>
+                <button className="btn btn-outline-secondary btn-sm" onClick={closeStops}>← Back to trails</button>
             </div>
-            <div className="col-lg-7">
-                <div className="card p-3">
-                    <h5>Trail Information</h5>
-                    <div className="table-responsive">
-                        <table className="table table-sm table-striped">
-                            <thead><tr><th>Id</th><th>Title</th><th>Location</th><th>Visits</th><th>Actions</th></tr></thead>
-                            <tbody>
-                                {trails.map((trail) => (
-                                    <tr key={trail.id}>
-                                        <td>{trail.id}</td>
-                                        <td>{trail.title}</td>
-                                        <td>{trail.location}</td>
-                                        <td>{trail.visitCount}</td>
-                                        <td>
-                                            <button className="btn btn-sm btn-outline-primary me-2" onClick={() => editTrail(trail)}>Edit</button>
-                                            <button className="btn btn-sm btn-outline-danger" onClick={() => void deleteTrail(trail.id)}>Delete</button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+            <div className="row g-4">
+                <div className="col-lg-5">
+                    <div className="card p-3">
+                        <h6>{editingStopId === null ? 'Add Stop' : `Edit Stop #${stopForm.order}`}</h6>
+                        <form onSubmit={onStopSubmit}>
+                            <input className="form-control mb-2" placeholder="Order" type="number" min={1} value={stopForm.order}
+                                onChange={(e) => setStopForm({ ...stopForm, order: Number(e.target.value) })} required />
+                            <input className="form-control mb-2" placeholder="Points" type="number" min={1} value={stopForm.points}
+                                onChange={(e) => setStopForm({ ...stopForm, points: Number(e.target.value) })} required />
+                            <input className="form-control mb-2" placeholder="Title" value={stopForm.title}
+                                onChange={(e) => setStopForm({ ...stopForm, title: e.target.value })} required />
+                            <input className="form-control mb-2" placeholder="Coordinates (lat, lon)" value={stopForm.coordinates}
+                                onChange={(e) => setStopForm({ ...stopForm, coordinates: e.target.value })} required />
+                            <input className="form-control mb-2" placeholder="Image URL" value={stopForm.image}
+                                onChange={(e) => setStopForm({ ...stopForm, image: e.target.value })} />
+                            <textarea className="form-control mb-3" placeholder="Riddle" value={stopForm.riddle}
+                                onChange={(e) => setStopForm({ ...stopForm, riddle: e.target.value })} required />
+
+                            <button className="btn btn-primary me-2" type="submit">{editingStopId === null ? 'Add Stop' : 'Save Stop'}</button>
+                            <button className="btn btn-outline-secondary" type="button"
+                                onClick={() => { setStopForm({ ...emptyStop, order: stops.length + 1 }); setEditingStopId(null); }}>Clear</button>
+                        </form>
+                    </div>
+                </div>
+                <div className="col-lg-7">
+                    <div className="card p-3">
+                        <h6>Ordered Stops</h6>
+                        <div className="table-responsive">
+                            <table className="table table-sm table-striped">
+                                <thead><tr><th>#</th><th>Title</th><th>Pts</th><th>Visits</th><th>Actions</th></tr></thead>
+                                <tbody>
+                                    {stops.map((stop) => (
+                                        <tr key={stop.id}>
+                                            <td>{stop.order}</td>
+                                            <td>{stop.title}</td>
+                                            <td>{stop.points}</td>
+                                            <td>{stop.visitCount}</td>
+                                            <td>
+                                                <button className="btn btn-sm btn-outline-primary me-2" onClick={() => editStop(stop)}>Edit</button>
+                                                <button className="btn btn-sm btn-outline-danger" onClick={() => void deleteStop(stop)}>Delete</button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {stops.length === 0 && (
+                                        <tr><td colSpan={5} className="text-muted">No stops yet. Add the first one.</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     );
+
+    const renderTrails = () => {
+        if (stopsTrail) return renderStops(stopsTrail);
+
+        return (
+            <div className="row g-4">
+                <div className="col-lg-5">
+                    <div className="card p-3">
+                        <h5>{editingTrailId === null ? 'Add New Trail' : 'Edit Trail'}</h5>
+                        <form onSubmit={onTrailSubmit}>
+                            <input className="form-control mb-2" placeholder="Name" value={trailForm.name}
+                                onChange={(e) => setTrailForm({ ...trailForm, name: e.target.value })} required />
+                            <input className="form-control mb-2" placeholder="Region / Location" value={trailForm.region}
+                                onChange={(e) => setTrailForm({ ...trailForm, region: e.target.value })} />
+                            <input className="form-control mb-2" placeholder="Cover Image URL" value={trailForm.coverImage}
+                                onChange={(e) => setTrailForm({ ...trailForm, coverImage: e.target.value })} />
+                            <input className="form-control mb-2" placeholder="Trail URL" value={trailForm.url}
+                                onChange={(e) => setTrailForm({ ...trailForm, url: e.target.value })} />
+                            <input className="form-control mb-2" placeholder="Date" value={trailForm.date}
+                                onChange={(e) => setTrailForm({ ...trailForm, date: e.target.value })} />
+                            <textarea className="form-control mb-3" placeholder="Description" value={trailForm.description}
+                                onChange={(e) => setTrailForm({ ...trailForm, description: e.target.value })} required />
+
+                            <button className="btn btn-primary me-2" type="submit">{editingTrailId === null ? 'Add Trail' : 'Save Trail'}</button>
+                            <button className="btn btn-outline-secondary" type="button" onClick={() => { setTrailForm(emptyTrail); setEditingTrailId(null); }}>Clear</button>
+                        </form>
+                        {editingTrailId === null && (
+                            <p className="text-muted small mt-2 mb-0">Add a trail, then use “Stops” to add its locations.</p>
+                        )}
+                    </div>
+                </div>
+                <div className="col-lg-7">
+                    <div className="card p-3">
+                        <h5>Trails</h5>
+                        <div className="table-responsive">
+                            <table className="table table-sm table-striped">
+                                <thead><tr><th>Name</th><th>Region</th><th>Actions</th></tr></thead>
+                                <tbody>
+                                    {trails.map((trail) => (
+                                        <tr key={trail.id}>
+                                            <td>{trail.name}</td>
+                                            <td>{trail.region}</td>
+                                            <td>
+                                                <button className="btn btn-sm btn-outline-secondary me-2" onClick={() => void manageStops(trail)}>Stops</button>
+                                                <button className="btn btn-sm btn-outline-primary me-2" onClick={() => editTrail(trail)}>Edit</button>
+                                                <button className="btn btn-sm btn-outline-danger" onClick={() => void deleteTrail(trail)}>Delete</button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
 
     const renderUpdates = () => (
         <div className="row g-4">

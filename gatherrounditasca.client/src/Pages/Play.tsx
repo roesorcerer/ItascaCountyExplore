@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
 import Header from '../LayoutAssets/Header';
 import Footer from '../LayoutAssets/Footer';
@@ -6,7 +6,7 @@ import { SectionHead, Button, Modal, Card } from '../components';
 import { useFetch, useModal, useGeolocation } from '../hooks';
 import { isWithinProximity } from '../utils';
 import { API_ENDPOINTS, MESSAGES } from '../constants';
-import { Location } from '../types';
+import { Trail, TrailDetail, CheckinResult } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 
 // Icon components
@@ -24,27 +24,22 @@ const LoadingIcon = () => (
     </svg>
 );
 
-// Trail card component - reusable
+// Trail card — one curated Trail in the grid.
 interface TrailCardProps {
-  location: Location;
-  onSelect: (location: Location) => void;
+  trail: Trail;
+  onSelect: (trail: Trail) => void;
 }
 
-const TrailCard: React.FC<TrailCardProps> = ({ location, onSelect }) => (
+const TrailCard: React.FC<TrailCardProps> = ({ trail, onSelect }) => (
     <Card
         clickable
-        onClick={() => onSelect(location)}
-        style={{
-            aspectRatio: 'auto',
-            display: 'flex',
-            flexDirection: 'column',
-        }}
+        onClick={() => onSelect(trail)}
+        style={{ aspectRatio: 'auto', display: 'flex', flexDirection: 'column' }}
     >
-        {/* Image */}
         <div
             style={{
                 aspectRatio: '16/10',
-                backgroundImage: `url(${location.image})`,
+                backgroundImage: `url(${trail.coverImage})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 position: 'relative',
@@ -52,171 +47,151 @@ const TrailCard: React.FC<TrailCardProps> = ({ location, onSelect }) => (
             }}
         >
             <div
-                style={{
-                    position: 'absolute',
-                    inset: 0,
-                    background: 'linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.4) 100%)',
-                }}
+                style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.4) 100%)' }}
                 aria-hidden="true"
             />
         </div>
 
-        {/* Content */}
         <div style={{ padding: '1.5rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
             <p style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--it-primary)', margin: '0 0 0.5rem' }}>
-                {location.location}
+                {trail.region}
             </p>
             <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '0 0 0.5rem', color: 'var(--it-text)' }}>
-                {location.title}
+                {trail.name}
             </h3>
             <p style={{ fontSize: '0.9rem', color: 'var(--it-text-muted)', margin: 0, lineHeight: 1.5, flex: 1 }}>
-                {location.description}
+                {trail.description}
             </p>
-            <Button
-                variant="primary"
-                fullWidth
-                style={{ marginTop: '1.25rem' }}
-                onClick={(e) => {
-                    e.stopPropagation();
-                }}
-            >
-                Guess this trail
+            <span style={{ marginTop: '1rem', fontSize: '0.8rem', fontWeight: 600, color: 'var(--it-text-muted)' }}>
+                {trail.stopCount} {trail.stopCount === 1 ? 'stop' : 'stops'}
+            </span>
+            <Button variant="primary" fullWidth style={{ marginTop: '0.75rem' }} onClick={(e) => e.stopPropagation()}>
+                Start this trail
             </Button>
         </div>
     </Card>
 );
 
-// Check-in form component - reusable
-interface CheckInFormProps {
-  selectedLocation: Location | null;
-  onCheckIn: (playerId: string) => Promise<void>;
-  loading: boolean;
-  defaultPlayerId?: string;
-}
-
-const CheckInForm: React.FC<CheckInFormProps> = ({ onCheckIn, loading, defaultPlayerId }) => {
-    const [playerId, setPlayerId] = React.useState(defaultPlayerId || '');
-
-    React.useEffect(() => {
-      if (defaultPlayerId) {
-        setPlayerId(defaultPlayerId);
-      }
-    }, [defaultPlayerId]);
-
-    const handleSubmit = useCallback(async () => {
-        await onCheckIn(playerId);
-        if (!loading) setPlayerId('');
-    }, [playerId, onCheckIn, loading]);
-
+// Progress bar across a Trail's Stops.
+const ProgressBar: React.FC<{ completed: number; total: number }> = ({ completed, total }) => {
+    const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
     return (
-        <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            <div>
-                <p style={{ fontSize: '0.85rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--it-primary)', margin: '0 0 0.75rem' }}>
-                    Have you been here?
-                </p>
-                <p style={{ color: 'var(--it-text-muted)', fontSize: '0.9rem', margin: 0, lineHeight: 1.6 }}>
-                    Go to this location, then enter your Player ID and tap "Check In." We'll verify you're actually there using your phone's GPS.
-                </p>
+        <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 600, color: 'var(--it-text-muted)', marginBottom: '0.4rem' }}>
+                <span>Progress</span>
+                <span>{completed} / {total} stops</span>
             </div>
-
-            <div>
-                <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--it-text)' }}>
-                    Your Player ID
-                </label>
-                <input
-                    type="text"
-                    placeholder="e.g., PurpleTacosOtter"
-                    value={playerId}
-                    onChange={(e) => setPlayerId(e.target.value)}
-                    disabled={loading}
-                    style={{
-                        width: '100%',
-                        padding: '0.85rem 1rem',
-                        borderRadius: 'var(--it-radius)',
-                        border: '1.5px solid var(--it-border)',
-                        background: 'var(--it-bg)',
-                        color: 'var(--it-text)',
-                        fontSize: '1rem',
-                        fontWeight: 600,
-                        letterSpacing: '0.04em',
-                        boxSizing: 'border-box',
-                    }}
-                />
-                <p style={{ fontSize: '0.75rem', color: 'var(--it-text-muted)', margin: '0.5rem 0 0' }}>
-                    Don't have one? <a href="/join" style={{ color: 'var(--it-primary)', textDecoration: 'none' }}>Sign up first</a>
-                </p>
+            <div style={{ height: '8px', borderRadius: '999px', background: 'var(--it-bg-muted)', overflow: 'hidden' }}>
+                <div style={{ width: `${pct}%`, height: '100%', background: 'var(--it-primary)', transition: 'width 0.3s ease' }} />
             </div>
-
-            <Button
-                variant="primary"
-                fullWidth
-                loading={loading}
-                onClick={handleSubmit}
-                disabled={!playerId.trim()}
-                icon={<GeoIcon />}
-            >
-                Check In
-            </Button>
         </div>
     );
 };
 
-// Main Play page
+// Main Play page — the Trail walker.
 const Play: React.FC = () => {
-    const { data: locations, loading } = useFetch<Location[]>(API_ENDPOINTS.LOCATIONS);
+    const { data: trails, loading } = useFetch<Trail[]>(API_ENDPOINTS.TRAILS);
     const { isOpen, open, close } = useModal();
     const { getLocation, loading: geoLoading } = useGeolocation();
-    const [selectedLocation, setSelectedLocation] = React.useState<Location | null>(null);
-    const [checkInLoading, setCheckInLoading] = React.useState(false);
     const { user } = useAuth();
 
-    const handleSelectTrail = useCallback((location: Location) => {
-        setSelectedLocation(location);
-        open();
-    }, [open]);
+    const [detail, setDetail] = React.useState<TrailDetail | null>(null);
+    const [detailLoading, setDetailLoading] = React.useState(false);
+    const [checkInLoading, setCheckInLoading] = React.useState(false);
+    const [playerId, setPlayerId] = React.useState(user?.playerId ?? '');
 
-    const handleCheckIn = useCallback(async (playerId: string) => {
-        if (!playerId.trim()) {
+    useEffect(() => {
+        if (user?.playerId) setPlayerId(user.playerId);
+    }, [user?.playerId]);
+
+    // Fetch one Trail as seen by this Player — progress + the single revealed Stop.
+    const loadDetail = useCallback(async (trailId: string, pid?: string) => {
+        setDetailLoading(true);
+        try {
+            const query = pid ? `?playerId=${encodeURIComponent(pid)}` : '';
+            const resp = await fetch(`${API_ENDPOINTS.TRAILS}/${trailId}${query}`);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            setDetail(await resp.json());
+        } catch (err) {
+            toast.error(MESSAGES.ERROR.FETCH_FAILED);
+            console.error(err);
+        } finally {
+            setDetailLoading(false);
+        }
+    }, []);
+
+    const handleSelectTrail = useCallback((trail: Trail) => {
+        setDetail(null);
+        open();
+        void loadDetail(trail.id, playerId.trim() || user?.playerId);
+    }, [open, loadDetail, playerId, user?.playerId]);
+
+    const handleCheckIn = useCallback(async () => {
+        const pid = playerId.trim();
+        if (!pid) {
             toast.error(MESSAGES.ERROR.REQUIRED_PLAYER_ID);
             return;
         }
-        if (!selectedLocation) return;
+        if (!detail?.currentStop) return;
 
         setCheckInLoading(true);
         try {
+            // Confirm the Player exists before spending a geolocation fix.
+            const playerResp = await fetch(`${API_ENDPOINTS.PLAYER_RETRIEVE_ID}?playerID=${encodeURIComponent(pid)}`);
+            if (!playerResp.ok) {
+                toast.error(MESSAGES.ERROR.INVALID_PLAYER_ID);
+                return;
+            }
+
             const coords = await getLocation();
             if (!coords) {
                 toast.error(MESSAGES.ERROR.GEOLOCATION_NOT_SUPPORTED);
                 return;
             }
 
-            // Verify player exists
-            const playerResp = await fetch(`${API_ENDPOINTS.PLAYER_RETRIEVE_ID}?playerID=${playerId}`);
-            if (!playerResp.ok) {
-                toast.error(MESSAGES.ERROR.INVALID_PLAYER_ID);
-                setCheckInLoading(false);
+            // Client-side proximity gate (docs/adr/0006 lives here, on the client).
+            if (!isWithinProximity(coords, detail.currentStop.coordinates)) {
+                toast.error(MESSAGES.ERROR.WRONG_LOCATION);
                 return;
             }
 
-            // Check proximity
-            if (isWithinProximity(coords, selectedLocation.coordinates)) {
-                toast.success(MESSAGES.SUCCESS.CHECKED_IN);
-                close();
-            } else {
-                toast.error(MESSAGES.ERROR.WRONG_LOCATION);
+            const resp = await fetch(API_ENDPOINTS.CHECKIN, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ playerId: pid, stopId: detail.currentStop.id }),
+            });
+
+            if (resp.status === 409) {
+                toast.error("That isn't your current stop yet.");
+                return;
             }
+            if (!resp.ok) {
+                toast.error(MESSAGES.ERROR.FETCH_FAILED);
+                return;
+            }
+
+            const result = (await resp.json()) as CheckinResult;
+            if (result.awarded > 0) {
+                toast.success(MESSAGES.SUCCESS.CHECKED_IN_POINTS(result.awarded));
+            } else {
+                toast.info(MESSAGES.SUCCESS.ALREADY_CHECKED_IN);
+            }
+            if (result.trailComplete) {
+                toast.success(MESSAGES.SUCCESS.TRAIL_COMPLETE);
+            }
+
+            // Reload so the next Stop is revealed (or the trail shows complete).
+            await loadDetail(detail.id, pid);
         } catch (err) {
             toast.error(MESSAGES.ERROR.FETCH_FAILED);
             console.error(err);
         } finally {
             setCheckInLoading(false);
         }
-    }, [selectedLocation, getLocation, close]);
+    }, [playerId, detail, getLocation, loadDetail]);
 
-    const trailCount = useMemo(
-        () => locations?.length ?? 0,
-        [locations]
-    );
+    const trailCount = useMemo(() => trails?.length ?? 0, [trails]);
+    const busy = checkInLoading || geoLoading;
 
     if (loading) {
         return (
@@ -238,10 +213,11 @@ const Play: React.FC = () => {
                 <section className="it-section" style={{ paddingTop: '3rem' }}>
                     <SectionHead
                         eyebrow="Play Now"
-                        title="Guess the trails"
+                        title="Walk the trails"
                         subtitle={
                             <>
-                                See a photo and riddle. Can you recognize the spot? Head there in person and check in to score points.
+                                Pick a trail, read the riddle for its first stop, and head there in person to check in.
+                                Each check-in reveals the next stop and scores you points.
                                 {trailCount > 0 && (
                                     <span style={{ display: 'block', marginTop: '0.75rem', color: 'var(--it-primary)', fontWeight: 600 }}>
                                         {trailCount} trails waiting to be discovered
@@ -251,7 +227,7 @@ const Play: React.FC = () => {
                         }
                     />
 
-                    {locations && locations.length > 0 ? (
+                    {trails && trails.length > 0 ? (
                         <div style={{
                             maxWidth: '1100px',
                             margin: '0 auto',
@@ -259,12 +235,8 @@ const Play: React.FC = () => {
                             gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
                             gap: '1.25rem',
                         }}>
-                            {locations.map((location) => (
-                                <TrailCard
-                                    key={location.id}
-                                    location={location}
-                                    onSelect={handleSelectTrail}
-                                />
+                            {trails.map((trail) => (
+                                <TrailCard key={trail.id} trail={trail} onSelect={handleSelectTrail} />
                             ))}
                         </div>
                     ) : (
@@ -275,45 +247,107 @@ const Play: React.FC = () => {
                 </section>
             </main>
 
-            {/* Modal for riddle and check-in */}
-            <Modal
-                isOpen={isOpen}
-                onClose={close}
-                title={selectedLocation?.title}
-                maxWidth="720px"
-            >
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0 }}>
-                    {/* Left: Photo + Riddle */}
-                    <div style={{ borderRight: '1.5px solid var(--it-border)' }}>
-                        <div
-                            style={{
-                                aspectRatio: '1',
-                                backgroundImage: selectedLocation ? `url(${selectedLocation.image})` : undefined,
-                                backgroundSize: 'cover',
-                                backgroundPosition: 'center',
-                            }}
-                            aria-label={selectedLocation?.title}
-                        />
-                        {selectedLocation && (
-                            <div style={{ padding: '1.5rem' }}>
-                                <p style={{ fontSize: '0.85rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--it-primary)', margin: '0 0 1rem' }}>
-                                    Your riddle
+            <Modal isOpen={isOpen} onClose={close} title={detail?.name} maxWidth="720px">
+                {detailLoading || !detail ? (
+                    <div style={{ padding: '3rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+                        <LoadingIcon />
+                        <p style={{ color: 'var(--it-text-muted)' }}>Loading trail...</p>
+                    </div>
+                ) : (
+                    <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                        <ProgressBar completed={detail.completed} total={detail.total} />
+
+                        {detail.trailComplete ? (
+                            <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
+                                <div style={{ fontSize: '3rem' }}>🏆</div>
+                                <h3 style={{ color: 'var(--it-text)', margin: '0.5rem 0' }}>Trail complete!</h3>
+                                <p style={{ color: 'var(--it-text-muted)', margin: 0 }}>
+                                    You've checked in at every stop on {detail.name}. Pick another trail to keep climbing the leaderboard.
                                 </p>
-                                <div style={{ color: 'var(--it-text)', lineHeight: 1.7, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                                    {selectedLocation.riddle.replace(/\\n/g, '\n')}
+                            </div>
+                        ) : detail.currentStop ? (
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                                {/* Left: the revealed current Stop */}
+                                <div>
+                                    {detail.currentStop.image && (
+                                        <div
+                                            style={{
+                                                aspectRatio: '1',
+                                                backgroundImage: `url(${detail.currentStop.image})`,
+                                                backgroundSize: 'cover',
+                                                backgroundPosition: 'center',
+                                                borderRadius: 'var(--it-radius)',
+                                                marginBottom: '1rem',
+                                            }}
+                                            aria-label={detail.currentStop.title}
+                                        />
+                                    )}
+                                    <p style={{ fontSize: '0.85rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--it-primary)', margin: '0 0 0.5rem' }}>
+                                        Stop {detail.currentStop.order} · {detail.currentStop.points} pts
+                                    </p>
+                                    <div style={{ color: 'var(--it-text)', lineHeight: 1.7, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                                        {detail.currentStop.riddle.replace(/\\n/g, '\n')}
+                                    </div>
                                 </div>
+
+                                {/* Right: check-in */}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                    <div>
+                                        <p style={{ fontSize: '0.85rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--it-primary)', margin: '0 0 0.5rem' }}>
+                                            Are you here?
+                                        </p>
+                                        <p style={{ color: 'var(--it-text-muted)', fontSize: '0.9rem', margin: 0, lineHeight: 1.6 }}>
+                                            Go to this stop, then check in. We'll confirm you're there with your phone's GPS.
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--it-text)' }}>
+                                            Your Player ID
+                                        </label>
+                                        <input
+                                            type="text"
+                                            placeholder="e.g., PurpleTacosOtter"
+                                            value={playerId}
+                                            onChange={(e) => setPlayerId(e.target.value)}
+                                            disabled={busy}
+                                            style={{
+                                                width: '100%',
+                                                padding: '0.85rem 1rem',
+                                                borderRadius: 'var(--it-radius)',
+                                                border: '1.5px solid var(--it-border)',
+                                                background: 'var(--it-bg)',
+                                                color: 'var(--it-text)',
+                                                fontSize: '1rem',
+                                                fontWeight: 600,
+                                                letterSpacing: '0.04em',
+                                                boxSizing: 'border-box',
+                                            }}
+                                        />
+                                        <p style={{ fontSize: '0.75rem', color: 'var(--it-text-muted)', margin: '0.5rem 0 0' }}>
+                                            Don't have one? <a href="/join" style={{ color: 'var(--it-primary)', textDecoration: 'none' }}>Sign up first</a>
+                                        </p>
+                                    </div>
+
+                                    <Button
+                                        variant="primary"
+                                        fullWidth
+                                        loading={busy}
+                                        onClick={handleCheckIn}
+                                        disabled={!playerId.trim()}
+                                        icon={<GeoIcon />}
+                                    >
+                                        Check In
+                                    </Button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
+                                <p style={{ color: 'var(--it-text-muted)', margin: 0 }}>This trail has no stops yet. Check back soon!</p>
                             </div>
                         )}
                     </div>
-
-                    {/* Right: Check-in */}
-                    <CheckInForm
-                        selectedLocation={selectedLocation}
-                        onCheckIn={handleCheckIn}
-                        loading={checkInLoading || geoLoading}
-                        defaultPlayerId={user?.playerId}
-                    />
-                </div>
+                )}
             </Modal>
 
             <ToastContainer position="bottom-right" />
