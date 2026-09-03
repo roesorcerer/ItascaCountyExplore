@@ -6,6 +6,7 @@ interface User {
   favoriteColor: string;
   favoriteFood: string;
   favoriteAnimal: string;
+  token: string;
 }
 
 interface AuthContextType {
@@ -26,7 +27,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       try {
-        setUser(JSON.parse(stored));
+        const savedUser = JSON.parse(stored) as User;
+        if (!savedUser.playerId || !savedUser.token) {
+          localStorage.removeItem(STORAGE_KEY);
+          return;
+        }
+
+        setUser(savedUser);
       } catch {
         localStorage.removeItem(STORAGE_KEY);
       }

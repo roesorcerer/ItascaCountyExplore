@@ -4,7 +4,6 @@
 export const API_BASE = import.meta.env.VITE_API_BASE || '/api';
 
 export const API_ENDPOINTS = {
-  LOCATIONS: `${API_BASE}/locations`,
   // Public Trail read path (docs/adr/0004). Detail: `${TRAILS}/${trailId}?playerId=`.
   TRAILS: `${API_BASE}/trails`,
   CHECKIN: `${API_BASE}/checkin`,
@@ -15,7 +14,6 @@ export const API_ENDPOINTS = {
   // The curated Favorites picklists, served by the backend so the client renders
   // exactly the choices the server enforces. See docs/adr/0005.
   PLAYER_FAVORITES: '/api/player/favorites',
-  PLAYER_RETRIEVE_ID: `${API_BASE}/Player/retrieveID`,
   UPDATES: `${API_BASE}/updates`,
   ADMIN_LOGIN: `${API_BASE}/admin/login`,
 } as const;

@@ -136,13 +136,6 @@ const Play: React.FC = () => {
 
         setCheckInLoading(true);
         try {
-            // Confirm the Player exists before spending a geolocation fix.
-            const playerResp = await fetch(`${API_ENDPOINTS.PLAYER_RETRIEVE_ID}?playerID=${encodeURIComponent(pid)}`);
-            if (!playerResp.ok) {
-                toast.error(MESSAGES.ERROR.INVALID_PLAYER_ID);
-                return;
-            }
-
             const coords = await getLocation();
             if (!coords) {
                 toast.error(MESSAGES.ERROR.GEOLOCATION_NOT_SUPPORTED);
@@ -167,7 +160,10 @@ const Play: React.FC = () => {
 
             const resp = await fetch(API_ENDPOINTS.CHECKIN, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${user?.token ?? ''}`,
+                },
                 body: JSON.stringify({ playerId: pid, stopId: detail.currentStop.id }),
             });
 

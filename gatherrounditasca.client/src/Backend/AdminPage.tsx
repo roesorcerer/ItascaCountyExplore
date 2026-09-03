@@ -48,6 +48,7 @@ interface UserItem {
     favoriteFood: string;
     favoriteAnimal: string;
     points: number;
+    isDisabled: boolean;
 }
 
 interface LeaderboardItem {
@@ -103,6 +104,7 @@ const emptyUser: UserItem = {
     favoriteFood: '',
     favoriteAnimal: '',
     points: 0,
+    isDisabled: false,
 };
 
 function AdminPage() {
@@ -131,6 +133,7 @@ function AdminPage() {
 
     const [userForm, setUserForm] = useState<UserItem>(emptyUser);
     const [editingUserId, setEditingUserId] = useState<string | null>(null);
+    const [resetPin, setResetPin] = useState('');
 
     const topTrailName = useMemo(() => dashboard?.popularTrails?.[0]?.title ?? 'N/A', [dashboard]);
 
@@ -359,6 +362,7 @@ function AdminPage() {
     const editUser = (user: UserItem) => {
         setUserForm(user);
         setEditingUserId(user.playerId);
+        setResetPin('');
         setActiveTab('users');
     };
 
@@ -370,19 +374,44 @@ function AdminPage() {
             return;
         }
 
-        const response = await authedFetch(`/api/admin/users/${encodeURIComponent(editingUserId)}`, {
-            method: 'PUT',
+        const emailResponse = await authedFetch(`/api/admin/users/${encodeURIComponent(editingUserId)}/email`, {
+            method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(userForm),
+            body: JSON.stringify({ email: userForm.email }),
         });
 
-        if (!response.ok) {
-            setError(`User update failed: ${await response.text()}`);
+        if (!emailResponse.ok) {
+            setError(`Email update failed: ${await emailResponse.text()}`);
             return;
+        }
+
+        const disabledResponse = await authedFetch(`/api/admin/users/${encodeURIComponent(editingUserId)}/disabled`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ isDisabled: userForm.isDisabled }),
+        });
+
+        if (!disabledResponse.ok) {
+            setError(`Account status update failed: ${await disabledResponse.text()}`);
+            return;
+        }
+
+        if (resetPin) {
+            const pinResponse = await authedFetch(`/api/admin/users/${encodeURIComponent(editingUserId)}/reset-pin`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pin: resetPin }),
+            });
+
+            if (!pinResponse.ok) {
+                setError(`PIN reset failed: ${await pinResponse.text()}`);
+                return;
+            }
         }
 
         setUserForm(emptyUser);
         setEditingUserId(null);
+        setResetPin('');
         await loadAllData();
     };
 
@@ -622,17 +651,20 @@ function AdminPage() {
                         <input className="form-control mb-2" placeholder="Player Id" value={userForm.playerId} disabled />
                         <input className="form-control mb-2" placeholder="Email" value={userForm.email}
                             onChange={(e) => setUserForm({ ...userForm, email: e.target.value })} required />
-                        <input className="form-control mb-2" placeholder="Favorite Color" value={userForm.favoriteColor}
-                            onChange={(e) => setUserForm({ ...userForm, favoriteColor: e.target.value })} required />
-                        <input className="form-control mb-2" placeholder="Favorite Food" value={userForm.favoriteFood}
-                            onChange={(e) => setUserForm({ ...userForm, favoriteFood: e.target.value })} required />
-                        <input className="form-control mb-2" placeholder="Favorite Animal" value={userForm.favoriteAnimal}
-                            onChange={(e) => setUserForm({ ...userForm, favoriteAnimal: e.target.value })} required />
-                        <input className="form-control mb-3" placeholder="Points" type="number" min={0} value={userForm.points}
-                            onChange={(e) => setUserForm({ ...userForm, points: Number(e.target.value) })} required />
+                        <input className="form-control mb-2" placeholder="Favorite Color" value={userForm.favoriteColor} disabled />
+                        <input className="form-control mb-2" placeholder="Favorite Food" value={userForm.favoriteFood} disabled />
+                        <input className="form-control mb-2" placeholder="Favorite Animal" value={userForm.favoriteAnimal} disabled />
+                        <input className="form-control mb-2" placeholder="Points" type="number" value={userForm.points} disabled />
+                        <input className="form-control mb-2" placeholder="Reset PIN (four digits)" value={resetPin} maxLength={4}
+                            onChange={(e) => setResetPin(e.target.value.replace(/\D/g, ''))} inputMode="numeric" />
+                        <div className="form-check mb-3">
+                            <input className="form-check-input" type="checkbox" id="user-disabled" checked={userForm.isDisabled}
+                                onChange={(e) => setUserForm({ ...userForm, isDisabled: e.target.checked })} />
+                            <label className="form-check-label" htmlFor="user-disabled">Account disabled</label>
+                        </div>
 
                         <button className="btn btn-primary me-2" type="submit">Save User</button>
-                        <button className="btn btn-outline-secondary" type="button" onClick={() => { setUserForm(emptyUser); setEditingUserId(null); }}>Clear</button>
+                        <button className="btn btn-outline-secondary" type="button" onClick={() => { setUserForm(emptyUser); setEditingUserId(null); setResetPin(''); }}>Clear</button>
                     </form>
                 </div>
             </div>
@@ -641,13 +673,14 @@ function AdminPage() {
                     <h5>User Statistics</h5>
                     <div className="table-responsive">
                         <table className="table table-sm table-striped">
-                            <thead><tr><th>Player</th><th>Email</th><th>Points</th><th>Actions</th></tr></thead>
+                            <thead><tr><th>Player</th><th>Email</th><th>Points</th><th>Status</th><th>Actions</th></tr></thead>
                             <tbody>
                                 {users.map((user) => (
                                     <tr key={user.playerId}>
                                         <td>{user.playerId}</td>
                                         <td>{user.email}</td>
                                         <td>{user.points}</td>
+                                        <td>{user.isDisabled ? 'Disabled' : 'Active'}</td>
                                         <td>
                                             <button className="btn btn-sm btn-outline-primary me-2" onClick={() => editUser(user)}>Edit</button>
                                             <button className="btn btn-sm btn-outline-danger" onClick={() => void deleteUser(user.playerId)}>Delete</button>

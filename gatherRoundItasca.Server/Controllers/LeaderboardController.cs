@@ -1,6 +1,5 @@
 using gatherRoundItasca.Server.Services;
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Driver;
 
 namespace gatherRoundItasca.Server.Controllers;
 
@@ -8,20 +7,17 @@ namespace gatherRoundItasca.Server.Controllers;
 [Route("api/[controller]")]
 public class LeaderboardController : ControllerBase
 {
-    private readonly IMongoCollection<Models.PlayerDataModel> _players;
+    private readonly LeaderboardService _leaderboard;
 
-    public LeaderboardController(MongoCollectionsService collectionsService)
+    public LeaderboardController(LeaderboardService leaderboard)
     {
-        _players = collectionsService.Players;
+        _leaderboard = leaderboard;
     }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Models.LeaderboardModel>>> GetAsync()
     {
-        var players = await _players.Find(Builders<Models.PlayerDataModel>.Filter.Empty)
-            .SortByDescending(x => x.Points)
-            .ThenBy(x => x.PlayerId)
-            .ToListAsync();
+        var players = await _leaderboard.GetRankedPlayersAsync();
 
         // The Leaderboard is derived here, not stored: Rank is the player's
         // 1-based position in the points-sorted list.

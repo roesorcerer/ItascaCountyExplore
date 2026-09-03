@@ -46,6 +46,9 @@ namespace gatherRoundItasca.Server.Models
 
         // When set and in the future, login is locked out until this time.
         public DateTime? LockoutUntil { get; set; }
+
+        // An Admin may disable a Player without deleting their check-in history.
+        public bool IsDisabled { get; set; }
     }
 }
 

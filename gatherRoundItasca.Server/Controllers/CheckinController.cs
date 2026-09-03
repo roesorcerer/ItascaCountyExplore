@@ -1,3 +1,4 @@
+using gatherRoundItasca.Server.Authorization;
 using gatherRoundItasca.Server.Models;
 using gatherRoundItasca.Server.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -18,6 +19,7 @@ namespace gatherRoundItasca.Server.Controllers;
 // concerned only with order, idempotency, and scoring.
 [ApiController]
 [Route("api/[controller]")]
+[PlayerAuthorize]
 public class CheckinController : ControllerBase
 {
     private readonly IMongoCollection<PlayerDataModel> _players;
@@ -41,10 +43,21 @@ public class CheckinController : ControllerBase
             return BadRequest(new { message = "playerId and stopId are required." });
         }
 
+        var authenticatedPlayerId = HttpContext.Items["PlayerId"] as string;
+        if (!string.Equals(authenticatedPlayerId, request.PlayerId, StringComparison.Ordinal))
+        {
+            return Forbid();
+        }
+
         var player = await _players.Find(x => x.PlayerId == request.PlayerId).FirstOrDefaultAsync();
         if (player == null)
         {
             return NotFound(new { message = "Player not found." });
+        }
+
+        if (player.IsDisabled)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "This Player account is disabled." });
         }
 
         // StopId is an ObjectId string. Reject a malformed one up front — otherwise the
@@ -91,8 +104,9 @@ public class CheckinController : ControllerBase
         catch (MongoWriteException ex) when (ex.WriteError?.Category == ServerErrorCategory.DuplicateKey)
         {
             // Lost a race against a concurrent identical check-in. The unique index
-            // (PlayerId, StopId) makes double-scoring impossible — treat as the no-op.
-            return Ok(BuildResult(awarded: 0, player.Points, orderedStops, completed));
+            // (PlayerId, StopId) makes double-scoring impossible — refresh so this
+            // caller receives the best available points/progress state.
+            return Ok(await BuildCurrentResultAsync(player.PlayerId!, stop.TrailId, awarded: 0));
         }
 
         // New check-in: update the denormalized Points cache and read back the truth.
@@ -103,6 +117,14 @@ public class CheckinController : ControllerBase
 
         completed.Add(stop.Id!);
         return Ok(BuildResult(stop.Points, updated?.Points ?? player.Points + stop.Points, orderedStops, completed));
+    }
+
+    private async Task<CheckinResult> BuildCurrentResultAsync(string playerId, string trailId, int awarded)
+    {
+        var player = await _players.Find(x => x.PlayerId == playerId).FirstOrDefaultAsync();
+        var orderedStops = await _progress.GetOrderedStopsAsync(trailId);
+        var completed = await _progress.GetCompletedStopIdsAsync(playerId, trailId);
+        return BuildResult(awarded, player?.Points ?? 0, orderedStops, completed);
     }
 
     private static CheckinResult BuildResult(int awarded, int totalPoints, List<StopModel> orderedStops, HashSet<string> completed)

@@ -24,10 +24,6 @@ namespace gatherRoundItasca.Server
                 ?? Environment.GetEnvironmentVariable("MONGODB_CONNECTION_STRING");
             var mongoDatabaseName = Configuration["MongoDb:DatabaseName"] ?? "itascatrails";
 
-            System.Diagnostics.Debug.WriteLine($"DEBUG: MongoConnectionString from config: {Configuration["MongoDb:ConnectionString"]}");
-            System.Diagnostics.Debug.WriteLine($"DEBUG: MONGODB_CONNECTION_STRING env: {Environment.GetEnvironmentVariable("MONGODB_CONNECTION_STRING")}");
-            System.Diagnostics.Debug.WriteLine($"DEBUG: Final mongoConnectionString: {mongoConnectionString}");
-
             if (string.IsNullOrWhiteSpace(mongoConnectionString))
             {
                 throw new InvalidOperationException("MongoDB connection string is missing. Set MONGODB_CONNECTION_STRING environment variable.");
@@ -37,6 +33,7 @@ namespace gatherRoundItasca.Server
             services.AddSingleton(sp =>
                 sp.GetRequiredService<IMongoClient>().GetDatabase(mongoDatabaseName));
             services.AddSingleton<MongoCollectionsService>();
+            services.AddSingleton<LeaderboardService>();
             // Derives Player progress / the current Stop from the checkins log. See docs/adr/0004.
             services.AddSingleton<TrailProgressService>();
             services.AddScoped<MongoSeedService>();
@@ -55,17 +52,18 @@ namespace gatherRoundItasca.Server
             // Add EmailService and EmailSettings to the service collection
             services.Configure<EmailSettings>(Configuration.GetSection("EmailSettings"));
             services.AddTransient<EmailService>();
+            var allowedOrigins = Configuration.GetSection("Cors:AllowedOrigins")
+                .GetChildren()
+                .Select(origin => origin.Value)
+                .Where(origin => !string.IsNullOrWhiteSpace(origin))
+                .Cast<string>()
+                .ToArray();
             services.AddCors(options =>
             {
                 options.AddPolicy(name: "MyAllowSpecificOrigins",
                                   builder =>
                                   {
-                                      builder.WithOrigins(
-                                                "https://localhost:5173",
-                                                "http://localhost:5164",
-                                                "https://localhost:5164",
-                                                "https://itascatrails.fly.dev"
-                                             )
+                                      builder.WithOrigins(allowedOrigins)
                                              .AllowAnyHeader()
                                              .AllowAnyMethod();
                                   });
@@ -83,6 +81,10 @@ namespace gatherRoundItasca.Server
             using (var scope = app.ApplicationServices.CreateScope())
             {
                 var services = scope.ServiceProvider;
+
+                // Validate the admin signing configuration during startup instead
+                // of discovering a missing production secret on the first request.
+                services.GetRequiredService<AdminTokenService>();
 
                 // Schema setup (indexes/uniqueness) runs independently of data
                 // seeding so the email-uniqueness invariant holds even when there's
@@ -178,7 +180,6 @@ namespace gatherRoundItasca.Server
                 app.UseHttpsRedirection();
             }
 
-            app.UseStaticFiles();
             app.UseCors("MyAllowSpecificOrigins");
             app.UseRouting();
             app.UseAuthorization();
@@ -186,7 +187,6 @@ namespace gatherRoundItasca.Server
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
-                endpoints.MapFallbackToFile("index.html");
             });
         }
 

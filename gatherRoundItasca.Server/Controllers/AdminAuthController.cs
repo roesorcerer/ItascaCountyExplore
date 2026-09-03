@@ -67,7 +67,7 @@ public class AdminAuthController : ControllerBase
                     .Set(x => x.LockoutUntil, null));
         }
 
-        var token = _tokens.Issue(admin.Username);
+        var token = _tokens.IssueAdmin(admin.Username);
         return Ok(new { token, username = admin.Username });
     }
 

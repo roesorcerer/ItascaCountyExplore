@@ -13,9 +13,16 @@ public class EmailService
 
     public async Task SendEmailAsync(string email, string subject, string message)
     {
+        var sender = _emailSettings.Sender
+            ?? throw new InvalidOperationException("EmailSettings:Sender is required.");
+        var mailServer = _emailSettings.MailServer
+            ?? throw new InvalidOperationException("EmailSettings:MailServer is required.");
+        var mailPort = _emailSettings.MailPort
+            ?? throw new InvalidOperationException("EmailSettings:MailPort is required.");
+
         var mailMessage = new MailMessage()
         {
-            From = new MailAddress(_emailSettings.Sender, _emailSettings.SenderName),
+            From = new MailAddress(sender, _emailSettings.SenderName),
             Subject = subject,
             Body = message,
             IsBodyHtml = true,
@@ -23,9 +30,9 @@ public class EmailService
 
         mailMessage.To.Add(email);
 
-        using var smtpClient = new SmtpClient(_emailSettings.MailServer, (int)_emailSettings.MailPort)
+        using var smtpClient = new SmtpClient(mailServer, mailPort)
         {
-            Credentials = new NetworkCredential(_emailSettings.Sender, _emailSettings.Password),
+            Credentials = new NetworkCredential(sender, _emailSettings.Password),
             EnableSsl = true,
         };
 

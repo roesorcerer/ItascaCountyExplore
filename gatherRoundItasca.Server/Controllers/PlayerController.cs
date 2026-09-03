@@ -17,12 +17,14 @@ public class PlayerController : ControllerBase
 
     private readonly EmailService _emailService;
     private readonly IMongoCollection<PlayerDataModel> _players;
+    private readonly AdminTokenService _tokens;
     private readonly ILogger<PlayerController> _logger;
 
-    public PlayerController(EmailService emailService, MongoCollectionsService collectionsService, ILogger<PlayerController> logger)
+    public PlayerController(EmailService emailService, MongoCollectionsService collectionsService, AdminTokenService tokens, ILogger<PlayerController> logger)
     {
         _emailService = emailService;
         _players = collectionsService.Players;
+        _tokens = tokens;
         _logger = logger;
     }
 
@@ -126,7 +128,7 @@ public class PlayerController : ControllerBase
                 _logger.LogWarning(ex, "Failed to send registration email for PlayerId {PlayerId}", candidate);
             }
 
-            return Ok(new { playerId = candidate });
+            return Ok(new { playerId = candidate, token = _tokens.IssuePlayer(candidate) });
         }
 
         _logger.LogError("Exhausted PlayerId suffixes for base {BaseId}", baseId);
@@ -146,6 +148,11 @@ public class PlayerController : ControllerBase
         if (player == null || string.IsNullOrWhiteSpace(player.PinHash))
         {
             return Unauthorized(new { Message = "Invalid PlayerId or PIN." });
+        }
+
+        if (player.IsDisabled)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { Message = "This Player account is disabled." });
         }
 
         if (player.LockoutUntil is { } until && until > DateTime.UtcNow)
@@ -176,6 +183,7 @@ public class PlayerController : ControllerBase
         return Ok(new
         {
             success = true,
+            token = _tokens.IssuePlayer(player.PlayerId!),
             player = new
             {
                 playerId = player.PlayerId,
@@ -245,52 +253,6 @@ public class PlayerController : ControllerBase
         }
 
         return Ok(new { playerId = player.PlayerId });
-    }
-
-    // Lookup of a known PlayerId (e.g. to confirm a Player exists before a
-    // check-in). This is not recovery — recovery is by Favorites, above.
-    [HttpGet("retrieveID")]
-    public async Task<IActionResult> RetrievePlayerId([FromQuery] string playerID)
-    {
-        if (string.IsNullOrWhiteSpace(playerID))
-        {
-            return BadRequest(new { Message = "playerID is required." });
-        }
-
-        var player = await _players.Find(x => x.PlayerId == playerID).FirstOrDefaultAsync();
-        if (player == null)
-        {
-            return NotFound(new { Message = "Player not found" });
-        }
-
-        return Ok(new
-        {
-            PlayerId = player.PlayerId,
-            Email = player.Email,
-            FavoriteColor = player.FavoriteColor,
-            FavoriteFood = player.FavoriteFood,
-            FavoriteAnimal = player.FavoriteAnimal
-        });
-    }
-
-    [HttpPatch("updateScore")]
-    public async Task<IActionResult> AddPointsAsync([FromQuery] string playerId, [FromQuery] int pointsToAdd)
-    {
-        if (string.IsNullOrWhiteSpace(playerId))
-        {
-            return BadRequest(new { Message = "playerId is required." });
-        }
-
-        var updateResult = await _players.UpdateOneAsync(
-            x => x.PlayerId == playerId,
-            Builders<PlayerDataModel>.Update.Inc(x => x.Points, pointsToAdd));
-
-        if (updateResult.MatchedCount == 0)
-        {
-            return NotFound(new { Message = "Player not found" });
-        }
-
-        return Ok(new { Message = "Score updated" });
     }
 
     private async Task RegisterFailedAttempt(PlayerDataModel player)

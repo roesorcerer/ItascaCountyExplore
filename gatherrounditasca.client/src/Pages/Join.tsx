@@ -172,7 +172,7 @@ const Join: React.FC = () => {
           const data = await response.json().catch(() => null);
           throw new Error(data?.message || 'Registration failed');
         }
-        const { playerId } = await response.json();
+        const { playerId, token } = await response.json();
         form.values.playerId = playerId;
 
         // Auto-login
@@ -182,6 +182,7 @@ const Join: React.FC = () => {
           favoriteColor: values.color,
           favoriteFood: values.food,
           favoriteAnimal: values.animal,
+          token,
         });
 
         open();

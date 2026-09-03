@@ -42,13 +42,14 @@ const Login: React.FC = () => {
         return;
       }
 
-      const { player } = await response.json();
+      const { player, token } = await response.json();
       login({
         playerId: player.playerId,
         email: player.email || '',
         favoriteColor: player.favoriteColor || '',
         favoriteFood: player.favoriteFood || '',
         favoriteAnimal: player.favoriteAnimal || '',
+        token,
       });
 
       toast.success('Welcome back!');

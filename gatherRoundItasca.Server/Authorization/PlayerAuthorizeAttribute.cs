@@ -4,31 +4,25 @@ using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace gatherRoundItasca.Server.Authorization;
 
-// Gates every action it decorates behind a valid Admin bearer token. Applied to
-// each protected admin controller so no /admin/* management endpoint is reachable
-// without first logging in. The login endpoint itself lives separately, ungated.
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
-public sealed class AdminAuthorizeAttribute : Attribute, IAsyncAuthorizationFilter
+public sealed class PlayerAuthorizeAttribute : Attribute, IAsyncAuthorizationFilter
 {
     public Task OnAuthorizationAsync(AuthorizationFilterContext context)
     {
         var tokens = context.HttpContext.RequestServices.GetRequiredService<AdminTokenService>();
-
         var header = context.HttpContext.Request.Headers.Authorization.ToString();
         const string scheme = "Bearer ";
         var token = header.StartsWith(scheme, StringComparison.OrdinalIgnoreCase)
             ? header[scheme.Length..].Trim()
             : null;
-
         var identity = tokens.Validate(token);
-        if (identity?.Scope != "admin")
+        if (identity?.Scope != "player")
         {
-            context.Result = new UnauthorizedObjectResult(new { message = "Admin authentication required." });
+            context.Result = new UnauthorizedObjectResult(new { message = "Player authentication required." });
             return Task.CompletedTask;
         }
 
-        // Make the authenticated Admin available to downstream code if it needs it.
-        context.HttpContext.Items["AdminUsername"] = identity.Subject;
+        context.HttpContext.Items["PlayerId"] = identity.Subject;
         return Task.CompletedTask;
     }
 }

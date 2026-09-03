@@ -412,3 +412,4 @@ docker-compose.yml
 fly.toml
 .config
 /Community Ideas for scavenger hunt/*
+**/.env
