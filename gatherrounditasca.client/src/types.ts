@@ -20,6 +20,9 @@ export interface Stop {
   title: string;
   riddle: string;
   coordinates: string;
+  // Per-Stop check-in radius in metres (docs/adr/0006). Null/absent falls back to
+  // CHECKIN_RADIUS_METRES.
+  radius?: number | null;
   image?: string | null;
 }
 
@@ -77,4 +80,7 @@ export interface Update {
 export interface GeolocationCoordinates {
   latitude: number;
   longitude: number;
+  // Reported accuracy of the fix in metres (68% confidence radius per the
+  // Geolocation spec). Used by the check-in accuracy gate — see docs/adr/0006.
+  accuracy: number;
 }

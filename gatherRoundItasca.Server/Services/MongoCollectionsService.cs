@@ -62,6 +62,76 @@ namespace gatherRoundItasca.Server.Services
             await Checkins.Indexes.CreateOneAsync(new CreateIndexModel<CheckinModel>(checkinKeys, checkinOptions));
         }
 
+        // One-off migration: bring existing players' Favorites into their canonical
+        // picklist form. Registration now enforces the curated catalog (see
+        // docs/adr/0005), but rows written by the old free-text code may hold
+        // off-catalog casing/whitespace ("ice cream" instead of "Ice Cream"), which
+        // would make Favorites-based recovery (an exact match) miss. Canonicalizing
+        // does NOT change any PlayerId — that was minted at registration and is the
+        // document _id — it only realigns the stored recovery keys.
+        //
+        // Idempotent: a second run finds nothing left to change. Values that map to no
+        // catalog entry at all (genuine free text) are left untouched and reported, so
+        // they can be handled deliberately rather than silently guessed at.
+        public async Task<FavoritesNormalizationResult> NormalizeFavoritesAsync()
+        {
+            var players = await Players.Find(Builders<PlayerDataModel>.Filter.Empty).ToListAsync();
+            var writes = new List<WriteModel<PlayerDataModel>>();
+            var result = new FavoritesNormalizationResult();
+
+            foreach (var player in players)
+            {
+                var color = Reconcile(FavoritesCatalog.Colors, player.FavoriteColor, result);
+                var food = Reconcile(FavoritesCatalog.Foods, player.FavoriteFood, result);
+                var animal = Reconcile(FavoritesCatalog.Animals, player.FavoriteAnimal, result);
+
+                var changed =
+                    !string.Equals(color, player.FavoriteColor, StringComparison.Ordinal)
+                    || !string.Equals(food, player.FavoriteFood, StringComparison.Ordinal)
+                    || !string.Equals(animal, player.FavoriteAnimal, StringComparison.Ordinal);
+
+                if (!changed)
+                {
+                    continue;
+                }
+
+                var update = Builders<PlayerDataModel>.Update
+                    .Set(x => x.FavoriteColor, color)
+                    .Set(x => x.FavoriteFood, food)
+                    .Set(x => x.FavoriteAnimal, animal);
+                writes.Add(new UpdateOneModel<PlayerDataModel>(
+                    Builders<PlayerDataModel>.Filter.Eq(x => x.PlayerId, player.PlayerId), update));
+            }
+
+            if (writes.Count > 0)
+            {
+                await Players.BulkWriteAsync(writes, new BulkWriteOptions { IsOrdered = false });
+            }
+
+            result.PlayersUpdated = writes.Count;
+            return result;
+        }
+
+        // Returns the canonical catalog form of a stored favorite. A value already in
+        // canonical form (or empty) is returned unchanged; an off-catalog value that
+        // can't be canonicalized is returned unchanged and counted, never guessed.
+        private static string? Reconcile(IReadOnlyList<string> picklist, string? stored, FavoritesNormalizationResult result)
+        {
+            if (string.IsNullOrWhiteSpace(stored))
+            {
+                return stored;
+            }
+
+            var canonical = FavoritesCatalog.Canonicalize(picklist, stored);
+            if (canonical == null)
+            {
+                result.OffCatalogValues++;
+                return stored;
+            }
+
+            return canonical;
+        }
+
         // Ensures the single Admin account exists, seeded from configuration (the
         // username + password supplied via Admin:Username / Admin:Password, which
         // come from env vars in deployment). It is created once and never
@@ -87,5 +157,16 @@ namespace gatherRoundItasca.Server.Services
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(password)
             });
         }
+    }
+
+    // Outcome of the one-off Favorites normalization, for logging.
+    public class FavoritesNormalizationResult
+    {
+        // How many player documents had at least one Favorite rewritten.
+        public int PlayersUpdated { get; set; }
+
+        // How many stored Favorite values matched no catalog entry and were left as-is
+        // (genuine legacy free text needing manual attention).
+        public int OffCatalogValues { get; set; }
     }
 }

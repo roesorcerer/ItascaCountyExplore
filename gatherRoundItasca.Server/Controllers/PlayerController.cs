@@ -26,6 +26,19 @@ public class PlayerController : ControllerBase
         _logger = logger;
     }
 
+    // The curated Favorites picklists. Served so the client renders the same fixed
+    // choices the server enforces, keeping the two from drifting. See docs/adr/0005.
+    [HttpGet("favorites")]
+    public IActionResult GetFavorites()
+    {
+        return Ok(new
+        {
+            colors = FavoritesCatalog.Colors,
+            foods = FavoritesCatalog.Foods,
+            animals = FavoritesCatalog.Animals
+        });
+    }
+
     [HttpPost]
     [Route("register")]
     public async Task<IActionResult> RegisterPlayer([FromBody] PlayerRegistrationRequest registration)
@@ -38,11 +51,17 @@ public class PlayerController : ControllerBase
             return BadRequest(new { Message = "A valid email is required." });
         }
 
-        if (string.IsNullOrWhiteSpace(registration.FavoriteColor)
-            || string.IsNullOrWhiteSpace(registration.FavoriteFood)
-            || string.IsNullOrWhiteSpace(registration.FavoriteAnimal))
+        // Favorites must come from the fixed, curated picklist — never free text.
+        // They are reproducible identity material and the PlayerId built from them is
+        // public, so we canonicalize each against the authoritative catalog and reject
+        // anything not in it (this is the server-side guard the ADR requires; the
+        // dropdown UI is convenience, not enforcement). See docs/adr/0005.
+        var color = FavoritesCatalog.Canonicalize(FavoritesCatalog.Colors, registration.FavoriteColor);
+        var food = FavoritesCatalog.Canonicalize(FavoritesCatalog.Foods, registration.FavoriteFood);
+        var animal = FavoritesCatalog.Canonicalize(FavoritesCatalog.Animals, registration.FavoriteAnimal);
+        if (color == null || food == null || animal == null)
         {
-            return BadRequest(new { Message = "Favorite color, food and animal are all required." });
+            return BadRequest(new { Message = "Favorite color, food and animal must each be chosen from the provided lists." });
         }
 
         if (string.IsNullOrWhiteSpace(registration.Pin) || registration.Pin.Length != 4 || !registration.Pin.All(char.IsDigit))
@@ -61,8 +80,7 @@ public class PlayerController : ControllerBase
         // appended on collision. Insert with retry so concurrent registrations of
         // the same combination can't mint duplicate IDs (PlayerId is the _id, so
         // a clash surfaces as a duplicate-key write error).
-        var baseId = PlayerIdGenerator.BuildBase(
-            registration.FavoriteColor!, registration.FavoriteFood!, registration.FavoriteAnimal!);
+        var baseId = PlayerIdGenerator.BuildBase(color, food, animal);
         var pinHash = BCrypt.Net.BCrypt.HashPassword(registration.Pin);
 
         for (int suffix = 1; suffix <= 10000; suffix++)
@@ -77,9 +95,9 @@ public class PlayerController : ControllerBase
             {
                 PlayerId = candidate,
                 Email = email,
-                FavoriteColor = registration.FavoriteColor,
-                FavoriteFood = registration.FavoriteFood,
-                FavoriteAnimal = registration.FavoriteAnimal,
+                FavoriteColor = color,
+                FavoriteFood = food,
+                FavoriteAnimal = animal,
                 Points = 0,
                 PinHash = pinHash
             };
@@ -183,10 +201,18 @@ public class PlayerController : ControllerBase
             return BadRequest(new { Message = "Favorite color, food and animal are all required." });
         }
 
+        // Favorites are stored in their canonical picklist form, so canonicalize the
+        // query the same way — a case/whitespace variant of the same choice still
+        // matches. (Fall back to the raw value if it's off-catalog, which simply won't
+        // match and yields a clean "not found".) See docs/adr/0005.
+        var color = FavoritesCatalog.Canonicalize(FavoritesCatalog.Colors, request.FavoriteColor) ?? request.FavoriteColor!.Trim();
+        var food = FavoritesCatalog.Canonicalize(FavoritesCatalog.Foods, request.FavoriteFood) ?? request.FavoriteFood!.Trim();
+        var animal = FavoritesCatalog.Canonicalize(FavoritesCatalog.Animals, request.FavoriteAnimal) ?? request.FavoriteAnimal!.Trim();
+
         var matches = await _players.Find(x =>
-            x.FavoriteColor == request.FavoriteColor
-            && x.FavoriteFood == request.FavoriteFood
-            && x.FavoriteAnimal == request.FavoriteAnimal).ToListAsync();
+            x.FavoriteColor == color
+            && x.FavoriteFood == food
+            && x.FavoriteAnimal == animal).ToListAsync();
 
         var email = request.Email?.Trim().ToLowerInvariant();
         if (!string.IsNullOrWhiteSpace(email))

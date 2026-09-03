@@ -4,7 +4,7 @@ import Header from '../LayoutAssets/Header';
 import Footer from '../LayoutAssets/Footer';
 import { SectionHead, Button, Modal, Card } from '../components';
 import { useFetch, useModal, useGeolocation } from '../hooks';
-import { isWithinProximity } from '../utils';
+import { verifyCheckinLocation } from '../utils';
 import { API_ENDPOINTS, MESSAGES } from '../constants';
 import { Trail, TrailDetail, CheckinResult } from '../types';
 import { useAuth } from '../contexts/AuthContext';
@@ -149,9 +149,19 @@ const Play: React.FC = () => {
                 return;
             }
 
-            // Client-side proximity gate (docs/adr/0006 lives here, on the client).
-            if (!isWithinProximity(coords, detail.currentStop.coordinates)) {
-                toast.error(MESSAGES.ERROR.WRONG_LOCATION);
+            // Client-side proximity gate (docs/adr/0006 lives here, on the client):
+            // haversine-in-metres against the Stop's radius, with an accuracy gate.
+            const check = verifyCheckinLocation(
+                coords,
+                detail.currentStop.coordinates,
+                detail.currentStop.radius ?? undefined
+            );
+            if (!check.ok) {
+                toast.error(
+                    check.reason === 'inaccurate'
+                        ? MESSAGES.ERROR.LOCATION_INACCURATE
+                        : MESSAGES.ERROR.WRONG_LOCATION
+                );
                 return;
             }
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Theme } from './types';
-import { STORAGE_KEYS } from './constants';
+import { STORAGE_KEYS, FORM_OPTIONS, API_ENDPOINTS } from './constants';
 
 // Theme hook (already exists but improved)
 function getInitialTheme(): Theme {
@@ -65,10 +65,52 @@ export function useFetch<T>(
   return { data, loading, error };
 }
 
+// Favorites picklist hook. The backend is the authoritative source of the curated
+// colour/food/animal lists (it enforces them on registration); the client fetches
+// them so the dropdowns always match what the server will accept. Falls back to the
+// bundled FORM_OPTIONS if the fetch fails, so the form still works offline. See
+// docs/adr/0005.
+interface FavoritesCatalog {
+  colors: readonly string[];
+  foods: readonly string[];
+  animals: readonly string[];
+}
+
+export function useFavorites(): FavoritesCatalog {
+  const [catalog, setCatalog] = useState<FavoritesCatalog>(() => ({
+    colors: FORM_OPTIONS.colors,
+    foods: FORM_OPTIONS.foods,
+    animals: FORM_OPTIONS.animals,
+  }));
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(API_ENDPOINTS.PLAYER_FAVORITES)
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`))))
+      .then((data) => {
+        if (cancelled) return;
+        if (Array.isArray(data?.colors) && Array.isArray(data?.foods) && Array.isArray(data?.animals)) {
+          setCatalog({ colors: data.colors, foods: data.foods, animals: data.animals });
+        }
+      })
+      .catch(() => {
+        // Keep the bundled fallback already in state.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return catalog;
+}
+
 // Geolocation hook
 interface GeolocationResult {
   latitude: number;
   longitude: number;
+  // Reported accuracy of the fix, in metres. Consumed by the check-in accuracy
+  // gate (docs/adr/0006); previously discarded.
+  accuracy: number;
 }
 
 interface UseGeolocationOptions {
@@ -96,6 +138,7 @@ export function useGeolocation(options?: UseGeolocationOptions) {
           const result: GeolocationResult = {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy,
           };
           setCoords(result);
           setError(null);
@@ -109,7 +152,10 @@ export function useGeolocation(options?: UseGeolocationOptions) {
           options?.onError?.(errorMsg);
           setLoading(false);
           resolve(null);
-        }
+        },
+        // Ask for the GPS-grade fix the check-in accuracy gate expects rather than
+        // a coarse cached one. See docs/adr/0006.
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
       );
     });
   }, [options]);

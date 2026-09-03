@@ -1,4 +1,8 @@
-import { FORM_OPTIONS, GEO_PROXIMITY_THRESHOLD } from './constants';
+import {
+  FORM_OPTIONS,
+  CHECKIN_RADIUS_METRES,
+  CHECKIN_ACCURACY_GATE_METRES,
+} from './constants';
 import { GeolocationCoordinates } from './types';
 
 // The PlayerId itself is minted by the server from the Favorites (and may carry a
@@ -21,30 +25,66 @@ export function previewPlayerId(
   return pascalize(color) + pascalize(food) + pascalize(animal);
 }
 
-export function calculateDistance(
+const EARTH_RADIUS_METRES = 6_371_000;
+
+function toRadians(degrees: number): number {
+  return (degrees * Math.PI) / 180;
+}
+
+// Great-circle (haversine) distance in metres between two lat/lon points. Replaces
+// the old degrees/Chebyshev bounding-box check — see docs/adr/0006.
+export function haversineMetres(
   lat1: number,
   lon1: number,
   lat2: number,
   lon2: number
 ): number {
-  const dLat = Math.abs(lat1 - lat2);
-  const dLon = Math.abs(lon1 - lon2);
-  // Simple bounding box distance for quick proximity check
-  return Math.max(dLat, dLon);
+  const dLat = toRadians(lat2 - lat1);
+  const dLon = toRadians(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRadians(lat1)) *
+      Math.cos(toRadians(lat2)) *
+      Math.sin(dLon / 2) ** 2;
+  return 2 * EARTH_RADIUS_METRES * Math.asin(Math.min(1, Math.sqrt(a)));
 }
 
-export function isWithinProximity(
+// The outcome of judging a geolocation fix against a Stop (docs/adr/0006):
+// 'inaccurate' — the fix is too coarse to trust, reject before judging distance;
+// 'too_far'    — a trustworthy fix that is genuinely outside the radius;
+// ok           — passes (distance − accuracy ≤ radius).
+export type CheckinCheck =
+  | { ok: true; distance: number }
+  | { ok: false; reason: 'inaccurate'; accuracy: number }
+  | { ok: false; reason: 'too_far'; distance: number };
+
+// Verify a Player's fix against a Stop's "lat, lon" coordinates. `radiusMetres`
+// is the per-Stop override; it falls back to the global default when omitted.
+export function verifyCheckinLocation(
   userCoords: GeolocationCoordinates,
-  targetCoords: string
-): boolean {
-  const [targetLat, targetLon] = targetCoords.split(', ').map(Number);
-  const distance = calculateDistance(
+  targetCoords: string,
+  radiusMetres: number = CHECKIN_RADIUS_METRES,
+  accuracyGateMetres: number = CHECKIN_ACCURACY_GATE_METRES
+): CheckinCheck {
+  // (B) Reject a fix too coarse to trust, before its accuracy margin could carry
+  // an unbounded junk position past the lenient distance test below.
+  if (userCoords.accuracy > accuracyGateMetres) {
+    return { ok: false, reason: 'inaccurate', accuracy: userCoords.accuracy };
+  }
+
+  const [targetLat, targetLon] = targetCoords.split(',').map((v) => Number(v.trim()));
+  const distance = haversineMetres(
     userCoords.latitude,
     userCoords.longitude,
     targetLat,
     targetLon
   );
-  return distance <= GEO_PROXIMITY_THRESHOLD;
+
+  // (C) Judge distance leniently against the remaining accuracy margin.
+  if (distance - userCoords.accuracy <= radiusMetres) {
+    return { ok: true, distance };
+  }
+  return { ok: false, reason: 'too_far', distance };
 }
 
 export function parseMarkdown(str: string): string {

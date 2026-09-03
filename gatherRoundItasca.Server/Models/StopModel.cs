@@ -44,6 +44,11 @@ namespace gatherRoundItasca.Server.Models
         [Required]
         public string? Coordinates { get; set; }
 
+        // Per-Stop check-in radius, in metres. Null means "use the client default"
+        // (CHECKIN_RADIUS_METRES). The Admin may tighten or loosen it per Stop; the
+        // browser Geolocation fix is judged against it. See docs/adr/0006.
+        public double? Radius { get; set; }
+
         public string? Image { get; set; }
     }
 }

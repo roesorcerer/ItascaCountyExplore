@@ -156,6 +156,7 @@ public class AdminController : ControllerBase
             s.Title ?? string.Empty,
             s.Riddle ?? string.Empty,
             s.Coordinates ?? string.Empty,
+            s.Radius,
             s.Image,
             s.Id != null && visits.TryGetValue(s.Id, out var n) ? n : 0));
 
@@ -372,7 +373,7 @@ public class AdminController : ControllerBase
 
     public record TrailSummaryDto(string Id, string Title, string Location, int VisitCount);
 
-    public record StopAdminDto(string Id, string TrailId, int Order, int Points, string Title, string Riddle, string Coordinates, string? Image, int VisitCount);
+    public record StopAdminDto(string Id, string TrailId, int Order, int Points, string Title, string Riddle, string Coordinates, double? Radius, string? Image, int VisitCount);
 
     public record LeaderboardEntryDto(string PlayerId, string Email, int Points);
 

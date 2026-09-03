@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../LayoutAssets/Header';
 import Footer from '../LayoutAssets/Footer';
 import { Button, Modal, SectionHead } from '../components';
-import { useModal } from '../hooks';
+import { useModal, useFavorites } from '../hooks';
 import { useForm } from '../hooks/useForm';
 import { previewPlayerId, copyToClipboard } from '../utils';
-import { API_ENDPOINTS, MESSAGES, FORM_OPTIONS } from '../constants';
+import { API_ENDPOINTS, MESSAGES } from '../constants';
 import { toast } from 'react-toastify';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -98,9 +98,10 @@ const FormField: React.FC<FormFieldProps> = ({
 interface RecoverSectionProps {
   onRecover: (color: string, food: string, animal: string, email: string) => Promise<boolean>;
   loading: boolean;
+  favorites: { colors: readonly string[]; foods: readonly string[]; animals: readonly string[] };
 }
 
-const RecoverSection: React.FC<RecoverSectionProps> = ({ onRecover, loading }) => {
+const RecoverSection: React.FC<RecoverSectionProps> = ({ onRecover, loading, favorites }) => {
   const [color, setColor] = React.useState('');
   const [food, setFood] = React.useState('');
   const [animal, setAnimal] = React.useState('');
@@ -125,9 +126,9 @@ const RecoverSection: React.FC<RecoverSectionProps> = ({ onRecover, loading }) =
     }}>
       <p style={{ fontWeight: 600, marginBottom: '1rem', fontSize: '0.95rem' }}>Recover your ID</p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <FormField label="🎨 Favorite color" type="select" value={color} onChange={setColor} options={[...FORM_OPTIONS.colors]} disabled={loading} />
-        <FormField label="🍽️ Favorite food" type="select" value={food} onChange={setFood} options={[...FORM_OPTIONS.foods]} disabled={loading} />
-        <FormField label="🦌 Favorite animal" type="select" value={animal} onChange={setAnimal} options={[...FORM_OPTIONS.animals]} disabled={loading} />
+        <FormField label="🎨 Favorite color" type="select" value={color} onChange={setColor} options={[...favorites.colors]} disabled={loading} />
+        <FormField label="🍽️ Favorite food" type="select" value={food} onChange={setFood} options={[...favorites.foods]} disabled={loading} />
+        <FormField label="🦌 Favorite animal" type="select" value={animal} onChange={setAnimal} options={[...favorites.animals]} disabled={loading} />
         {needsEmail && (
           <FormField label="✉️ Your email (to find the right account)" type="email" value={email} onChange={setEmail} placeholder="name@example.com" disabled={loading} />
         )}
@@ -146,6 +147,9 @@ const Join: React.FC = () => {
   const [retrieveLoading, setRetrieveLoading] = React.useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  // Curated Favorites picklists, sourced from the backend (the authoritative list it
+  // enforces on registration), falling back to bundled constants. See docs/adr/0005.
+  const favorites = useFavorites();
 
   const form = useForm(
     { email: '', color: '', food: '', animal: '', pin: '' },
@@ -274,7 +278,7 @@ const Join: React.FC = () => {
                 type="select"
                 value={form.values.color}
                 onChange={(val) => form.setFieldValue('color', val)}
-                options={[...FORM_OPTIONS.colors]}
+                options={[...favorites.colors]}
               />
 
               <FormField
@@ -282,7 +286,7 @@ const Join: React.FC = () => {
                 type="select"
                 value={form.values.food}
                 onChange={(val) => form.setFieldValue('food', val)}
-                options={[...FORM_OPTIONS.foods]}
+                options={[...favorites.foods]}
               />
 
               <FormField
@@ -290,7 +294,7 @@ const Join: React.FC = () => {
                 type="select"
                 value={form.values.animal}
                 onChange={(val) => form.setFieldValue('animal', val)}
-                options={[...FORM_OPTIONS.animals]}
+                options={[...favorites.animals]}
               />
 
               <div>
@@ -366,7 +370,7 @@ const Join: React.FC = () => {
             </div>
 
             {/* Recover section */}
-            <RecoverSection onRecover={handleRecover} loading={retrieveLoading} />
+            <RecoverSection onRecover={handleRecover} loading={retrieveLoading} favorites={favorites} />
           </div>
         </section>
       </main>

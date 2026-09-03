@@ -98,6 +98,26 @@ namespace gatherRoundItasca.Server
                     logger.LogWarning(ex, "Could not ensure database indexes. Uniqueness constraints may be missing until the database connection is fixed.");
                 }
 
+                // One-off migration: normalize any existing off-catalog Favorites to
+                // their canonical picklist form so Favorites-based recovery keeps
+                // matching. Idempotent — a no-op once everything is canonical. See
+                // docs/adr/0005.
+                try
+                {
+                    var normalization = services.GetRequiredService<MongoCollectionsService>()
+                        .NormalizeFavoritesAsync().GetAwaiter().GetResult();
+                    if (normalization.PlayersUpdated > 0 || normalization.OffCatalogValues > 0)
+                    {
+                        logger.LogInformation(
+                            "Favorites normalized: {Updated} player(s) updated, {OffCatalog} off-catalog value(s) left for manual review.",
+                            normalization.PlayersUpdated, normalization.OffCatalogValues);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Could not normalize existing Favorites. Recovery may miss for legacy free-text rows until the database connection is fixed.");
+                }
+
                 // Seed the single Admin account from configuration (Admin:Username /
                 // Admin:Password, env vars in deployment). Created once if absent and
                 // never overwritten — rotating the password is a deliberate DB op.

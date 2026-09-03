@@ -125,7 +125,7 @@ public class CheckinRequest
 }
 
 // The revealed next Stop — never includes Stops beyond the current one.
-public record StopDto(string Id, string TrailId, int Order, int Points, string Title, string Riddle, string Coordinates, string? Image)
+public record StopDto(string Id, string TrailId, int Order, int Points, string Title, string Riddle, string Coordinates, double? Radius, string? Image)
 {
     public static StopDto? From(StopModel? stop) =>
         stop == null ? null : new StopDto(
@@ -136,6 +136,7 @@ public record StopDto(string Id, string TrailId, int Order, int Points, string T
             stop.Title ?? string.Empty,
             stop.Riddle ?? string.Empty,
             stop.Coordinates ?? string.Empty,
+            stop.Radius,
             stop.Image);
 }
 

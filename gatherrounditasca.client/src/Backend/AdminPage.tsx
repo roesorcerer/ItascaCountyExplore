@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../LayoutAssets/Header';
 import Footer from '../LayoutAssets/Footer';
+import MapPicker from './MapPicker';
 import { STORAGE_KEYS } from '../constants';
 
 type TabKey = 'dashboard' | 'trails' | 'updates' | 'users' | 'leaderboard';
@@ -26,6 +27,8 @@ interface Stop {
     title: string;
     riddle: string;
     coordinates: string;
+    // Per-Stop check-in radius in metres; empty falls back to the client default. See docs/adr/0006.
+    radius: number | null;
     image: string;
     visitCount: number;
 }
@@ -80,6 +83,7 @@ const emptyStop: Stop = {
     title: '',
     riddle: '',
     coordinates: '',
+    radius: null,
     image: '',
     visitCount: 0,
 };
@@ -145,7 +149,7 @@ function AdminPage() {
 
         if (response.status === 401) {
             sessionStorage.removeItem(STORAGE_KEYS.ADMIN_TOKEN);
-            navigate('/login');
+            navigate('/admin/login');
         }
 
         return response;
@@ -154,7 +158,7 @@ function AdminPage() {
     useEffect(() => {
         const token = sessionStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
         if (!token) {
-            navigate('/login');
+            navigate('/admin/login');
             return;
         }
 
@@ -192,7 +196,7 @@ function AdminPage() {
 
     const logout = () => {
         sessionStorage.removeItem(STORAGE_KEYS.ADMIN_TOKEN);
-        navigate('/login');
+        navigate('/admin/login');
     };
 
     // ----- Trails -----
@@ -456,6 +460,11 @@ function AdminPage() {
                                 onChange={(e) => setStopForm({ ...stopForm, title: e.target.value })} required />
                             <input className="form-control mb-2" placeholder="Coordinates (lat, lon)" value={stopForm.coordinates}
                                 onChange={(e) => setStopForm({ ...stopForm, coordinates: e.target.value })} required />
+                            <MapPicker value={stopForm.coordinates}
+                                onChange={(coords) => setStopForm({ ...stopForm, coordinates: coords })} />
+                            <input className="form-control mb-2" placeholder="Check-in radius (m) — blank = default 20" type="number" min={1}
+                                value={stopForm.radius ?? ''}
+                                onChange={(e) => setStopForm({ ...stopForm, radius: e.target.value === '' ? null : Number(e.target.value) })} />
                             <input className="form-control mb-2" placeholder="Image URL" value={stopForm.image}
                                 onChange={(e) => setStopForm({ ...stopForm, image: e.target.value })} />
                             <textarea className="form-control mb-3" placeholder="Riddle" value={stopForm.riddle}
